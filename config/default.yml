@@ -1,0 +1,58 @@
+
+directories:
+  data: ${UDGSIZES_HOME}/data
+
+cosmology:
+  class: astropy.cosmology.FlatLambdaCDM
+  name: "Standard"
+  H0: 70
+  Om0: 0.3
+  Tcmb0: 2.725
+
+injections:
+  receff_filename: recoveff.pkl
+  catalogue_filename: selected.csv
+
+defaults:
+  band: "HSC-R"
+  nproc: 4
+
+dimming:
+  blue:
+    age: 6.7
+    fsps:
+      logzsol: -0.66
+
+models:
+  blue:
+    rec_phys:
+      func: rec.power
+      initial: 1.5
+    uae_phys:
+      initial: 25
+      func: uae.exponential
+    redshift:
+      func: redshift.mass
+      min: 0.0001
+      max: 0.5
+      initial: 0.02
+    index:
+      initial: 1
+    colour_rest:
+      initial: 0.3
+
+grid:
+  sampling:
+    n_samples: 5000
+    burnin: 2000
+  parameters:
+    rec_phys:
+      alpha:
+        min: 2
+        max: 5
+        step: 0.1
+    uae_phys:
+      k:
+        min: 0
+        max: 3
+        step: 0.1
