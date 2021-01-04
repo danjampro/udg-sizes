@@ -10,7 +10,7 @@ cosmology:
   Tcmb0: 2.725
 
 injections:
-  receff_filename: recoveff.pkl
+  receff_filename: recoveff_interp.pkl
   catalogue_filename: selected.csv
 
 defaults:

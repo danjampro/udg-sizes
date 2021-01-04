@@ -133,7 +133,7 @@ def load_classifier(config=None):
 def get_classifier_filename(config=None):
     if config is None:
         config = get_config()
-    return os.path.join(config["directories"]["data"], "indices_colour.pkl")
+    return os.path.join(config["directories"]["data"], "index_colour.pkl")
 
 
 def _summary_plot(indices, colours, red, indices_rand, colours_rand):
