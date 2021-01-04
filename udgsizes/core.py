@@ -13,7 +13,7 @@ from udgsizes.utils.library import load_module
 ROOTDIR_ENV_NAME = "UDGSIZES_HOME"
 
 
-def get_config(config_dir=None, ignore_local=False, testing=False, parse=True):
+def get_config(config_dir=None, ignore_local=False, testing=False, parse=True, name="default"):
     """
 
     """
@@ -23,11 +23,11 @@ def get_config(config_dir=None, ignore_local=False, testing=False, parse=True):
         except KeyError:
             raise RuntimeError(f"Unable to determine config directory: {ROOTDIR_ENV_NAME}"
                                " environment variable not set and config_dir is None.")
-    config = _load_yaml(os.path.join(config_dir, "default.yml"))
+    config = _load_yaml(os.path.join(config_dir, f"{name}.yml"))
     # Update the config with local version
     if not ignore_local:
         with suppress(FileNotFoundError):
-            config_local = _load_yaml(os.path.join(config_dir, "config_local.yml"))
+            config_local = _load_yaml(os.path.join(config_dir, f"{name}_local.yml"))
             config = _update_config(config, config_local)
     # Update the config with testing values
     if testing:
