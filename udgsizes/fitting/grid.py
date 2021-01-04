@@ -85,7 +85,7 @@ class ParameterGrid(UdgSizesBase):
 
         return df
 
-    def summary_plot(self, index=None, show=True):
+    def summary_plot(self, index=None, show=True, bins=15):
         """
         """
         dfo = load_sample(config=self.config, logger=self.logger, select=True)
@@ -97,12 +97,16 @@ class ParameterGrid(UdgSizesBase):
 
         ax0 = plt.subplot(2, 1, 1)
         histkwargs = dict(density=True, histtype="step")
-        ax0.hist(dfo['mueff_av'].values, color="k", **histkwargs)
-        ax0.hist(df['uae_obs_jig'].values, color="b", **histkwargs)
+        rng = (min(dfo['mueff_av'].min(), df['uae_obs_jig'].min()),
+               max(dfo['mueff_av'].max(), df['uae_obs_jig'].max()))
+        ax0.hist(dfo['mueff_av'].values, color="k", range=rng, bins=bins, **histkwargs)
+        ax0.hist(df['uae_obs_jig'].values, color="b", range=rng, **histkwargs)
 
         ax1 = plt.subplot(2, 1, 2)
-        ax1.hist(dfo['rec_arcsec'].values, color="k", **histkwargs)
-        ax1.hist(df['rec_obs_jig'].values, color="b", **histkwargs)
+        rng = (min(dfo['rec_arcsec'].min(), df['rec_obs_jig'].min()),
+               max(dfo['rec_arcsec'].max(), df['rec_obs_jig'].max()))
+        ax1.hist(dfo['rec_arcsec'].values, color="k", range=rng, **histkwargs)
+        ax1.hist(df['rec_obs_jig'].values, color="b", range=rng, **histkwargs)
 
         plt.tight_layout()
         if show:

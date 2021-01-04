@@ -43,16 +43,16 @@ models:
 
 grid:
   sampling:
-    n_samples: 5000
+    n_samples: 10000
     burnin: 2000
   parameters:
     rec_phys:
       alpha:
         min: 2
         max: 5
-        step: 0.1
+        step: 0.05
     uae_phys:
       k:
         min: 0
         max: 3
-        step: 0.1
+        step: 0.05
