@@ -214,6 +214,7 @@ ENV/
 # Project-specific
 private/
 data/results
+data/*.prof
 data/models
 data/input/injections/detected.csv
 images/
@@ -221,3 +222,4 @@ temp/
 config/*_local*
 docs/
 results/
+paper/

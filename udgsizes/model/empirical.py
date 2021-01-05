@@ -90,8 +90,8 @@ class Model(UdgSizesBase):
 
         # Jiggle results
         if self._jiggler is not None:
-            df['uae_obs_jig'], df['rec_obs_jig'] = self._jiggler.jiggle(uae=df['uae_obs'].values,
-                                                                        rec=df['rec_obs'].values)
+            df['uae_obs_jig'], df['rec_obs_jig'], df["selected_jig"] = self._jiggler.jiggle(
+                uae=df['uae_obs'].values, rec=df['rec_obs'].values)
 
         # Save to file if filename is given
         if filename is not None:

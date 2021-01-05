@@ -8,8 +8,6 @@ import astropy.units as u
 
 from udgsizes.utils.library import load_module
 
-# TODO: Load HSC-SSP config under hsc_ssp key
-
 ROOTDIR_ENV_NAME = "UDGSIZES_HOME"
 
 

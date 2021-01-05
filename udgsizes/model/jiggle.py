@@ -43,7 +43,7 @@ class Jiggler(UdgSizesBase):
                 self.logger.warning(f"{cond.size-cond.sum()}/{cond.size} samples do not meet"
                                     " selection criteria.")
         self.logger.debug(f"Finished jiggling after {i+1}/{maxits} iterations.")
-        return uae_jig, rec_jig
+        return uae_jig, rec_jig, cond
 
     def _jiggle(self, uae, rec):
         """

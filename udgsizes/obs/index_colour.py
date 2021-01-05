@@ -50,7 +50,7 @@ class Classifier():
         if init is None:
             init = self.get_init()
 
-        # Fit
+        # Fit the K-means model
         self.kmeans = KMeans(n_clusters=2, init=init, max_iter=1000, random_state=0).fit(data)
 
         # Store indices

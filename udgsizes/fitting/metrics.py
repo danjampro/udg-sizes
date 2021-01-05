@@ -32,8 +32,9 @@ class MetricEvaluator(UdgSizesBase):
     def _kstest_2d(self, df):
         """
         """
-        x1 = df['uae_obs_jig'].values
-        y1 = df['rec_obs_jig'].values
+        cond = df["selected_jig"].values == 1
+        x1 = df['uae_obs_jig'].values[cond]
+        y1 = df['rec_obs_jig'].values[cond]
         x2 = self._observations['mueff_av'].values
         y2 = self._observations['rec_arcsec'].values
         return kstest_2d(x1, y1, x2, y2)
@@ -43,14 +44,15 @@ class MetricEvaluator(UdgSizesBase):
         fixes the rate paramter of the Poisson distribution in each bin. The likelihood is
         evaluated by calculating the Poisson probability of the observed counts in each bin.
         """
+        cond = df["selected_jig"].values == 1
         range = parameter_ranges['uae'], parameter_ranges['rec']
 
         uae_obs = self._observations["mueff_av"].values
         rec_obs = self._observations["rec_arcsec"].values
         obs, xedges, yedges = np.histogram2d(uae_obs, rec_obs, range=range, bins=n_bins)
 
-        uae_mod = df["uae_obs_jig"].values
-        rec_mod = df["rec_obs_jig"].values
+        uae_mod = df["uae_obs_jig"].values[cond]
+        rec_mod = df["rec_obs_jig"].values[cond]
         model, _, _ = np.histogram2d(uae_mod, rec_mod, range=range, bins=n_bins, density=True)
 
         # Rescale model by number of observations
