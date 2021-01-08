@@ -86,7 +86,7 @@ def make_plot(alpha, k, alphas, ks, dfs_fixed_k, dfs_fixed_alpha, keys=KEYS, col
         vmax = max([_.max() for _ in values])
         for i, v in enumerate(values):
             if key == keys[0]:
-                label = rf"$\alpha={alpha},k={ks[i]}$"
+                label = rf"$\alpha={alpha:.1f},k={ks[i]:.1f}$"
             else:
                 label = None
             color = colors[len(dfs_fixed_k)+i]
