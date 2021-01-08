@@ -13,7 +13,7 @@ LOGY = ("rec_phys", "uae_phys", "redshift", "rec_obs_jig", "uae_obs_jig")
 PLOTOBS = {"rec_obs_jig": "rec_arcsec",
            "uae_obs_jig": "mueff_av"}
 
-XLABELS = {"rec_phys": r"$\hat{r}_{e}\ \mathrm{[arcsec]}$",
+XLABELS = {"rec_phys": r"$\hat{r}_{e}\ \mathrm{[kpc]}$",
            "uae_phys": r"$\hat{\mu}_{e}\ \mathrm{[mag\ arcsec^{-2}]}$",
            "redshift": r"$z$",
            "rec_obs_jig": r"$\bar{r}_{e}\ \mathrm{[arcsec]}$",
@@ -41,7 +41,7 @@ def sample_model(model, alpha, k, alphas, ks, burnin, n_samples):
 
 
 def make_plot(alpha, k, alphas, ks, dfs_fixed_k, dfs_fixed_alpha, keys=KEYS, colors=COLOURS,
-              bins=20, figsize=(13, 4.5), fontsize=13):
+              bins=20, figsize=(14, 5), fontsize=12):
     """
     """
     n_keys = len(keys)
@@ -58,7 +58,8 @@ def make_plot(alpha, k, alphas, ks, dfs_fixed_k, dfs_fixed_alpha, keys=KEYS, col
         vmin = min([_.min() for _ in values])
         vmax = max([_.max() for _ in values])
         for i, v in enumerate(values):
-            if key == keys[0]:
+            if key == keys[-1]:
+                print(alphas[i], k)
                 label = rf"$\alpha={alphas[i]:.1f},k={k:.1f}$"
             else:
                 label = None
@@ -71,11 +72,13 @@ def make_plot(alpha, k, alphas, ks, dfs_fixed_k, dfs_fixed_alpha, keys=KEYS, col
             ax.set_ylabel("PDF", fontsize=fontsize)
         idx += 1
         with suppress(KeyError):
-            k = PLOTOBS[key]
-            plot_observations(ax, k, range=(vmin, vmax))
-        if (key == keys[0]) or key == "uae_obs_jig":
-            ax.legend(loc="upper right", fontsize=fontsize-5)
+            kk = PLOTOBS[key]
+            plot_observations(ax, kk, range=(vmin, vmax))
+        if (key == keys[-1]):  # or key == "uae_obs_jig":
+            ax.legend(loc="lower left", fontsize=fontsize-4)
         ax.set_xlim(vmin, vmax)
+        ax.tick_params(axis='y', which='major', labelsize=fontsize-4)
+        ax.tick_params(axis='y', which='minor', labelsize=fontsize-4)
 
     for key in keys:
         ax = plt.subplot(2, n_keys, idx)
@@ -85,7 +88,7 @@ def make_plot(alpha, k, alphas, ks, dfs_fixed_k, dfs_fixed_alpha, keys=KEYS, col
         vmin = min([_.min() for _ in values])
         vmax = max([_.max() for _ in values])
         for i, v in enumerate(values):
-            if key == keys[0]:
+            if key == keys[-1]:
                 label = rf"$\alpha={alpha:.1f},k={ks[i]:.1f}$"
             else:
                 label = None
@@ -98,14 +101,16 @@ def make_plot(alpha, k, alphas, ks, dfs_fixed_k, dfs_fixed_alpha, keys=KEYS, col
         if idx == n_keys+1:
             ax.set_ylabel("PDF", fontsize=fontsize)
         idx += 1
-        if key == keys[0]:
-            ax.legend(loc="best", fontsize=fontsize-5)
         with suppress(KeyError):
-            k = PLOTOBS[key]
-            plot_observations(ax, k, range=(vmin, vmax))
+            kk = PLOTOBS[key]
+            plot_observations(ax, kk, range=(vmin, vmax))
+        if key == keys[-1]:
+            ax.legend(loc="lower left", fontsize=fontsize-4)
         ax.set_xlim(vmin, vmax)
+        ax.tick_params(axis='y', which='major', labelsize=fontsize-4)
+        ax.tick_params(axis='y', which='minor', labelsize=fontsize-4)
 
-    plt.tight_layout()
+    # plt.tight_layout()
 
 
 def plot_quantile(ax, values, color, q=0.9, linestyle="--", linewidth=0.9):
@@ -139,8 +144,8 @@ def plot_observations(ax, key, range, bins=10, marker="o", color="k", markersize
 if __name__ == "__main__":
 
     model_name = "blue"
-    burnin = 1000
-    n_samples = 10000
+    burnin = 2000
+    n_samples = 20000
 
     k = 0.5
     alphas = [3, 4, 5]
