@@ -216,6 +216,7 @@ private/
 data/results
 data/*.prof
 data/models
+data/images
 data/input/injections/detected.csv
 images/
 temp/
