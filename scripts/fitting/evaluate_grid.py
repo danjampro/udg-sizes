@@ -5,10 +5,8 @@ from udgsizes.fitting.grid import ParameterGrid
 if __name__ == "__main__":
 
     pop_name = "blue"
-    makeplots = True
+    metrics_ignore = ["_kstest_2d"]
+    nproc = 4
 
     p = ParameterGrid(pop_name)
-    p.evaluate()
-
-    if makeplots:
-        p.summary_plot()
+    p.evaluate(metrics_ignore=metrics_ignore, nproc=nproc)

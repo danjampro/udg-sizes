@@ -7,7 +7,7 @@ if __name__ == "__main__":
 
     p = ParameterGrid(pop_name)
     p.sample(overwrite=True)
-    p.evaluate(metrics_ignore=["_kstest_2d"])
+    p.evaluate()
 
     if makeplots:
         p.summary_plot()
