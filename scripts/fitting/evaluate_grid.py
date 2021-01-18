@@ -1,3 +1,5 @@
+""" Code to evaluate a grid, replacing whatever metrics have already been calculated """
+
 from udgsizes.fitting.grid import ParameterGrid
 
 if __name__ == "__main__":
@@ -6,8 +8,7 @@ if __name__ == "__main__":
     makeplots = True
 
     p = ParameterGrid(pop_name)
-    p.sample(overwrite=True)
-    p.evaluate(metrics_ignore=["_kstest_2d"])
+    p.evaluate()
 
     if makeplots:
         p.summary_plot()

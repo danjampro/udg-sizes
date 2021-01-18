@@ -1,6 +1,7 @@
 """ Grid of model parameters """
 import os
 import shutil
+from functools import partial
 from multiprocessing import Pool
 import itertools
 import numpy as np
@@ -68,15 +69,16 @@ class ParameterGrid(UdgSizesBase):
 
         self.logger.debug("Finished sampling parameter grid.")
 
-    def evaluate(self, nproc=None, save=True):
+    def evaluate(self, nproc=None, save=True, **kwargs):
         """
         """
         if nproc is None:
             nproc = self.config["defaults"]["nproc"]
         self.logger.debug(f"Evaluating metrics using {nproc} processes.")
 
+        fn = partial(self._evaluate, **kwargs)
         with Pool(nproc) as pool:
-            result = pool.map(self._evaluate, np.arange(self.n_permutations))
+            result = pool.map(fn, np.arange(self.n_permutations))
 
         df = pd.concat(result, axis=1).T
         if save:
@@ -209,7 +211,7 @@ class ParameterGrid(UdgSizesBase):
         # Sample the model for this parameter permutation
         model.sample(hyper_params=hyper_params, filename=filename, **self._sample_kwargs)
 
-    def _evaluate(self, index):
+    def _evaluate(self, index, **kwargs):
         """
         """
         filename = self._get_sample_filename(index)
@@ -218,7 +220,7 @@ class ParameterGrid(UdgSizesBase):
         df = pd.read_csv(filename)
 
         # Evaluate metrics
-        result = pd.Series(self._evaluator.evaluate(df))
+        result = pd.Series(self._evaluator.evaluate(df, **kwargs))
 
         # Include hyper parameters in result
         # TODO: Make this neater
