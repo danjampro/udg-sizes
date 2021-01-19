@@ -13,6 +13,7 @@ from udgsizes.obs.sample import load_sample
 from udgsizes.model.empirical import Model
 from udgsizes.fitting.metrics import MetricEvaluator
 from udgsizes.utils.selection import select_samples
+from udgsizes.utils.stats.quantile import quantile_threshold
 
 
 class ParameterGrid(UdgSizesBase):
@@ -136,10 +137,10 @@ class ParameterGrid(UdgSizesBase):
             plt.show(block=False)
         return fig, ax
 
-    def load_best_sample(self, **kwargs):
+    def load_best_sample(self, metric="poisson_likelihood_2d", **kwargs):
         """
         """
-        index_best = self._get_best_index()
+        index_best = self._get_best_index(metric=metric)
         return self.load_sample(index=index_best, **kwargs)
 
     def load_sample(self, index, select=True):
@@ -155,6 +156,14 @@ class ParameterGrid(UdgSizesBase):
         """
         """
         return pd.read_csv(self._metric_filename)
+
+    def get_confident(self, metric="poisson_likelihood_2d", q=0.9):
+        """ Identify best models within confidence interval. """
+        df = self.load_metrics()
+        values = df[metric].values
+        threshold = quantile_threshold(values, q=q)
+        cond = values >= threshold
+        return df[cond].values.reset_index(drop=True)
 
     def get_best(self, **kwargs):
         """
@@ -188,7 +197,7 @@ class ParameterGrid(UdgSizesBase):
         pdict = {q: p for q, p in zip(self._quantity_names, par_array)}
         return pdict
 
-    def _get_best_index(self, df=None, metric="kstest_2d", func=np.argmax):
+    def _get_best_index(self, metric, df=None, func=np.argmax):
         """
         """
         if df is None:

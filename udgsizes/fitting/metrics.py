@@ -4,7 +4,7 @@ from scipy import stats
 from udgsizes.base import UdgSizesBase
 from udgsizes.obs.sample import load_sample
 from udgsizes.utils.selection import select_samples
-from udgsizes.utils.kstest import kstest_2d
+from udgsizes.utils.stats.kstest import kstest_2d
 from udgsizes.utils.selection import parameter_ranges
 
 
