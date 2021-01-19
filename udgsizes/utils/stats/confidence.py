@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def quantile_threshold(values, q):
+def confidence_threshold(values, q):
     """ Used for identifying models within a confidence interval defined by q. """
     values_sorted = values.copy().reshape(-1)
     values_sorted.sort()

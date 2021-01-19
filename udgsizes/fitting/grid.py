@@ -13,7 +13,7 @@ from udgsizes.obs.sample import load_sample
 from udgsizes.model.empirical import Model
 from udgsizes.fitting.metrics import MetricEvaluator
 from udgsizes.utils.selection import select_samples
-from udgsizes.utils.stats.quantile import quantile_threshold
+from udgsizes.utils.stats.confidence import confidence_threshold
 
 
 class ParameterGrid(UdgSizesBase):
@@ -162,7 +162,7 @@ class ParameterGrid(UdgSizesBase):
         df = self.load_metrics()
         values = df[metric].values
         values = np.exp(values+1000)
-        threshold = quantile_threshold(values, q=q)
+        threshold = confidence_threshold(values, q=q)
         cond = values >= threshold
         if as_bool_array:
             return cond
