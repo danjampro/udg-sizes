@@ -157,13 +157,21 @@ class ParameterGrid(UdgSizesBase):
         """
         return pd.read_csv(self._metric_filename)
 
-    def get_confident(self, metric="poisson_likelihood_2d", q=0.9):
+    def identify_confident(self, metric="poisson_likelihood_2d", q=0.9, as_bool_array=False):
         """ Identify best models within confidence interval. """
         df = self.load_metrics()
         values = df[metric].values
+        values = np.exp(values+1000)
         threshold = quantile_threshold(values, q=q)
         cond = values >= threshold
-        return df[cond].values.reset_index(drop=True)
+        if as_bool_array:
+            return cond
+        return df[cond].reset_index(drop=True)
+
+    def load_confident_samples(self, **kwargs):
+        """ Identify best models within confidence interval, returning a generator. """
+        cond = self.identify_confident(as_bool_array=True, **kwargs)
+        return (self.load_sample(i) for i in range(self.n_permutations) if cond[i])
 
     def get_best(self, **kwargs):
         """

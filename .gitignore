@@ -224,3 +224,4 @@ config/*_local*
 docs/
 results/
 paper/
+scripts/_*

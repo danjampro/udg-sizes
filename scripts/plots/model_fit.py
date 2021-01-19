@@ -16,6 +16,22 @@ RANGE = (24, 27), (3, 7)
 NORM = None  # mpl.colors.LogNorm()
 CMAP = "binary"
 
+
+def get_confidence_intervals(grid, keys, range, bins, density=True):
+    """
+    """
+    xx = {}
+    yy = {k: list() for k in keys}
+    dfs = grid.load_confident_samples()
+    for df in dfs:
+        for key in keys:
+            data = df[key].values
+            h, e = np.histogram(data, range=range[key], bins=bins, density=density)
+            yy[key] = h
+            xx[key] = 0.5 * (e[1:] + e[:-1])
+    return xx, yy
+
+
 if __name__ == "__main__":
 
     model_name = "blue_final"
@@ -28,6 +44,10 @@ if __name__ == "__main__":
     grid = ParameterGrid(model_name)
     dfm = grid.load_best_sample(metric=metric)
     dfo = load_sample()
+
+    keys = "rec_obs_jig", "uae_obs_jig"
+    range = {k: r for k, r in zip(keys, RANGE)}
+    confs = get_confidence_intervals(grid, keys, range=range, bins=BINS1D)
 
     fig = plt.figure(figsize=FIGSIZE)
     """
