@@ -64,8 +64,9 @@ class Model(UdgSizesBase):
         self._colour_index_likelihood = self._colour_classifier.vars["blue"].pdf
 
         # Create a SB dimmer object
-        self._dimming = SBDimming(self.model_name, config=self.config, logger=self.logger)
-        self._redenning = Reddening(self.model_name, config=self.config, logger=self.logger)
+        self._pop_name = model_config["pop_name"]
+        self._dimming = SBDimming(self._pop_name, config=self.config, logger=self.logger)
+        self._redenning = Reddening(self._pop_name, config=self.config, logger=self.logger)
 
         # Prepare the sampler
         self._sampler = Sampler(par_names=self._par_order, config=self.config, logger=self.logger)

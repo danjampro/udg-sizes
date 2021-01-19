@@ -25,6 +25,7 @@ dimming:
 
 models:
   blue:
+    pop_name: blue
     rec_phys:
       func: rec.power
       initial: 1.5
@@ -41,6 +42,7 @@ models:
     colour_rest:
       initial: 0.3
   blue_trunc:
+    pop_name: blue
     rec_phys:
       func: rec.power_trunc
       pars:
