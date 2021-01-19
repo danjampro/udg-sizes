@@ -1,7 +1,9 @@
 import os
 import numpy as np
 from scipy import stats
+import matplotlib as mpl
 import matplotlib.pyplot as plt
+from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from scipy.ndimage.filters import gaussian_filter
 
 from udgsizes.core import get_config
@@ -139,11 +141,12 @@ def contour_plot_threshold(ax, df, legend=True):
     zzexp = np.exp(zz+1000)
 
     levels = (likelihood_quantile(zzexp, 0.999999426696856),
+              likelihood_quantile(zzexp, 0.999936657516334),
               likelihood_quantile(zzexp, 0.997),
               likelihood_quantile(zzexp, 0.95),
               likelihood_quantile(zzexp, 0.68))
 
-    labels = r"$5\sigma$", r"$3\sigma$", r"$2\sigma$", r"$1\sigma$"
+    labels = r">$5\sigma$", r"$5\sigma$", r"$4\sigma$", r"$3\sigma$", r"$2\sigma$",  r"$1\sigma$"
 
     tmap = np.zeros_like(zz)
     for level in levels:
@@ -152,15 +155,24 @@ def contour_plot_threshold(ax, df, legend=True):
     ax.imshow(tmap, origin="lower", cmap="binary", extent=extent, aspect="auto")
 
     xrange = 0, 1.2
-    yrange = 2.5, 5.8
+    yrange = 2.4, 5.2
     fontsize = 15
 
-    ax.plot(xrange, [4.4, 4.4], 'b--')
-    ax.plot(xrange, [3.71, 3.71], 'r--')
-    ax.axhspan(4.4-0.19, 4.4+0.19, color="b", alpha=0.2,
-               label="van der Burg +16 (clusters),\nAmorisco +16")
-    ax.axhspan(3.71-0.33, 3.71+0.33, color="r", alpha=0.2,
+    ax.plot(xrange, [4.4, 4.4], 'r--')
+    ax.plot(xrange, [3.71, 3.71], 'b--')
+    ax.axhspan(4.4-0.19, 4.4+0.19, color="r", alpha=0.1,
+               label="van der Burg +16 (clusters), Amorisco +16")
+    ax.axhspan(3.71-0.33, 3.71+0.33, color="b", alpha=0.1,
                label="van der Burg +17 (groups)")
+
+    bounds = np.array([0, 1, 2, 3, 4, 5, 6])
+    cmap = plt.cm.binary
+    norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
+    axb = inset_axes(ax, width="45%", height="3%", loc=1, borderpad=0.8)
+    ticks = bounds+0.5
+    cb = mpl.colorbar.ColorbarBase(axb, cmap=cmap, norm=norm, spacing='proportional', ticks=ticks,
+                                   boundaries=bounds, format='%1i', orientation='horizontal')
+    cb.ax.set_xticklabels(labels)
 
     ax.set_xlim(*xrange)
     ax.set_ylim(*yrange)
@@ -168,7 +180,7 @@ def contour_plot_threshold(ax, df, legend=True):
     ax.set_xlabel("$k$", fontsize=fontsize)
     ax.set_ylabel(r"$\alpha$", fontsize=fontsize)
     if legend:
-        ax.legend(loc="best", frameon=False)
+        ax.legend(loc="lower left", frameon=False)
 
 
 def marginal_likelihood_plot(ax, df, key, range, bins=10, fontsize=15, legend=True):
@@ -224,6 +236,10 @@ if __name__ == "__main__":
     #ax1 = fig.add_subplot(spec[:, 1])
     #ax2 = fig.add_subplot(spec[:, 2])
 
+    fig, ax = plt.subplots()
+    contour_plot_threshold(ax, df)
+
+    """
     fig, (ax0, ax1, ax2) = plt.subplots(1, 3, figsize=(12, 4))
 
     #contour_plot_gauss(ax0, df)
@@ -234,6 +250,7 @@ if __name__ == "__main__":
     for ax in (ax0, ax1, ax2):
         asp = np.diff(ax.get_xlim())[0] / np.diff(ax.get_ylim())[0]
         ax.set_aspect(asp)
+    """
 
     plt.show(block=False)
     plt.savefig(image_filename, dpi=150, bbox_inches="tight")
