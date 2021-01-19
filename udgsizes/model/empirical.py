@@ -36,7 +36,7 @@ class Model(UdgSizesBase):
         # Add model functions
         self._par_configs = {}
         self._likelihood_funcs = {}
-        for par_name, par_config in model_config.items():
+        for par_name, par_config in model_config["variables"].items():
 
             self._par_configs[par_name] = par_config
 

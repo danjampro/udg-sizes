@@ -26,40 +26,42 @@ dimming:
 models:
   blue:
     pop_name: blue
-    rec_phys:
-      func: rec.power
-      initial: 1.5
-    uae_phys:
-      initial: 25
-      func: uae.exponential
-    redshift:
-      func: redshift.mass
-      min: 0.0001
-      max: 0.5
-      initial: 0.02
-    index:
-      initial: 1
-    colour_rest:
-      initial: 0.3
+    variables:
+      rec_phys:
+        func: rec.power
+        initial: 1.5
+      uae_phys:
+        initial: 25
+        func: uae.exponential
+      redshift:
+        func: redshift.mass
+        min: 0.0001
+        max: 0.5
+        initial: 0.02
+      index:
+        initial: 1
+      colour_rest:
+        initial: 0.3
   blue_trunc:
     pop_name: blue
-    rec_phys:
-      func: rec.power_trunc
-      pars:
-        r_trunc: 1.0
-      initial: 1.5
-    uae_phys:
-      initial: 25
-      func: uae.exponential
-    redshift:
-      func: redshift.mass
-      min: 0.0001
-      max: 0.5
-      initial: 0.02
-    index:
-      initial: 1
-    colour_rest:
-      initial: 0.3
+    variables:
+      rec_phys:
+        func: rec.power_trunc
+        pars:
+          r_trunc: 1.0
+        initial: 1.5
+      uae_phys:
+        initial: 25
+        func: uae.exponential
+      redshift:
+        func: redshift.mass
+        min: 0.0001
+        max: 0.5
+        initial: 0.02
+      index:
+        initial: 1
+      colour_rest:
+        initial: 0.3
 
 grid:
   sampling:
