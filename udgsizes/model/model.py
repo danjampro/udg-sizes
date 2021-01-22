@@ -23,20 +23,19 @@ class Model(UdgSizesBase):
     """ The purpose of the EmpiricalModel class is to sample re, uae, z values. It is *not* to
     sample the fitting paramters of the individual likelihood terms (e.g. size power law).
     """
-
-    _par_order = "rec_phys", "uae_phys", "redshift", "index", "colour_rest"
+    _par_order = None
 
     def __init__(self, model_name, use_interpolated_redshift=True, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.cosmo = self.config["cosmology"]
 
         self.model_name = model_name
-        model_config = self.config["models"][self.model_name]
+        self.model_config = self.config["models"][self.model_name]
 
         # Add model functions
         self._par_configs = {}
         self._likelihood_funcs = {}
-        for par_name, par_config in model_config["variables"].items():
+        for par_name, par_config in self.model_config["variables"].items():
 
             self._par_configs[par_name] = par_config
 
@@ -50,8 +49,9 @@ class Model(UdgSizesBase):
             with suppress(KeyError):
                 func = partial(func, **par_config['pars'])
 
-            # Explicitly add cosmology for redshift function
-            if par_name == "redshift":
+            # Explicitly add cosmology if required
+            if par_config.get("cosmo", False):
+                self.logger.debug(f"Using cosmology for '{par_name}' variable.")
                 func = partial(func, cosmo=self.cosmo)
 
             self._likelihood_funcs[par_name] = func
@@ -64,7 +64,7 @@ class Model(UdgSizesBase):
         self._colour_index_likelihood = self._colour_classifier.vars["blue"].pdf
 
         # Create a SB dimmer object
-        self._pop_name = model_config["pop_name"]
+        self._pop_name = self.model_config["pop_name"]
         self._dimming = SBDimming(self._pop_name, config=self.config, logger=self.logger)
         self._redenning = Reddening(self._pop_name, config=self.config, logger=self.logger)
 
@@ -104,12 +104,7 @@ class Model(UdgSizesBase):
     def _log_likelihood(self, state, rec_params, uae_params):
         """ The log-likelihood for the full model.
         """
-        rec_phys, uae_phys, redshift, index, colour = state
-        return (self._log_likelihood_recovery(rec_phys, uae_phys, redshift)
-                + self._log_likelihood_rec_phys(rec_phys, *rec_params)
-                + self._log_likelihood_uae_phys(uae_phys, *uae_params)
-                + self._log_likelihood_index_colour(index, colour, redshift)
-                + self._log_likelihood_redshift(redshift))
+        raise NotImplementedError
 
     def _log_likelihood_redshift(self, redshift):
         """ Calculate the contribution to the likelihood from the redshift.
@@ -127,17 +122,10 @@ class Model(UdgSizesBase):
             return -np.inf
         return np.log(self._likelihood_funcs["rec_phys"](rec_phys, *args, **kwargs))
 
-    def _log_likelihood_uae_phys(self, uae_phys, *args, **kwargs):
-        """ Calculate the contribution to the likelihood from the surface brightness.
-        """
-        return np.log(self._likelihood_funcs["uae_phys"](uae_phys, *args, **kwargs))
-
-    def _log_likelihood_recovery(self, rec_phys, uae_phys, redshift):
+    def _log_likelihood_recovery(self, *args, **kwargs):
         """ Calculate the contribution to the likelihood from the recovery efficiency.
         """
-        rec_obs = kpc_to_arcsec(rec_phys, redshift=redshift, cosmo=self.cosmo)
-        uae_obs = uae_phys + self._dimming(redshift=redshift)
-        return np.log(self._recovery_efficiency(uae_obs, rec_obs))
+        raise NotImplementedError
 
     def _log_likelihood_index_colour(self, index, colour_rest, redshift):
         """
@@ -186,7 +174,9 @@ class Model(UdgSizesBase):
         """ Project physical units to observable quantities """
         redshift = df['redshift'].values
         self.logger.debug("Projecting sample to observable quantities.")
-        df['rec_obs'] = kpc_to_arcsec(df['rec_phys'], redshift=redshift, cosmo=self.cosmo)
+        # Save time
+        if "rec_obs" not in df.columns:
+            df['rec_obs'] = kpc_to_arcsec(df['rec_phys'], redshift=redshift, cosmo=self.cosmo)
         df['uae_obs'] = df['uae_phys'] + self._dimming(redshift=redshift)
         df['colour_obs'] = df['colour_rest'] + self._redenning(redshift=redshift)
         return df

@@ -8,7 +8,8 @@ from udgsizes.model.empirical import Model
 from udgsizes.obs.sample import load_sample
 
 KEYS = ("rec_phys", "uae_phys", "redshift", "rec_obs_jig", "uae_obs_jig")
-COLOURS = ("red", "blue", "orange", "darkviolet", "deepskyblue", "chocolate")
+# COLOURS = ("red", "blue", "orange", "darkviolet", "deepskyblue", "chocolate")
+COLOURS = ("crimson", "darkorange", "royalblue", "darkviolet", "deepskyblue", "tomato")
 LOGY = ("rec_phys", "uae_phys", "redshift", "rec_obs_jig", "uae_obs_jig")
 PLOTOBS = {"rec_obs_jig": "rec_arcsec",
            "uae_obs_jig": "mueff_av"}
@@ -38,6 +39,24 @@ def sample_model(model, alpha, k, alphas, ks, burnin, n_samples):
         dfs_fixed_alpha.append(df)
 
     return dfs_fixed_k, dfs_fixed_alpha
+
+
+def plot_observations(ax, key, range, bins=10, marker="o", color="k", markersize=3, linewidth=0):
+    """ TODO: Move to utils.
+    """
+    df = load_sample(select=True)
+    values = df[key].values
+    h, e = np.histogram(values, range=range, bins=bins)
+    c = 0.5*(e[1:] + e[:-1])
+    err = np.sqrt(h)
+    norm = h.sum() * (e[1]-e[0])
+    xlim = ax.get_xlim()
+    ylim = ax.get_ylim()
+    ax.errorbar(c, h/norm, yerr=err/norm, elinewidth=1, markersize=markersize, color=color,
+                linewidth=linewidth, marker=marker, label="observed", zorder=10)
+    ax.set_xlim(xlim)
+    ax.set_ylim(ylim)
+    return ax
 
 
 def make_plot(alpha, k, alphas, ks, dfs_fixed_k, dfs_fixed_alpha, keys=KEYS, colors=COLOURS,
@@ -75,7 +94,7 @@ def make_plot(alpha, k, alphas, ks, dfs_fixed_k, dfs_fixed_alpha, keys=KEYS, col
             kk = PLOTOBS[key]
             plot_observations(ax, kk, range=(vmin, vmax))
         if (key == keys[-1]):  # or key == "uae_obs_jig":
-            ax.legend(loc="lower left", fontsize=fontsize-4)
+            ax.legend(loc="lower left", fontsize=fontsize-3)
         ax.set_xlim(vmin, vmax)
         ax.tick_params(axis='y', which='major', labelsize=fontsize-4)
         ax.tick_params(axis='y', which='minor', labelsize=fontsize-4)
@@ -105,7 +124,7 @@ def make_plot(alpha, k, alphas, ks, dfs_fixed_k, dfs_fixed_alpha, keys=KEYS, col
             kk = PLOTOBS[key]
             plot_observations(ax, kk, range=(vmin, vmax))
         if key == keys[-1]:
-            ax.legend(loc="lower left", fontsize=fontsize-4)
+            ax.legend(loc="lower left", fontsize=fontsize-3)
         ax.set_xlim(vmin, vmax)
         ax.tick_params(axis='y', which='major', labelsize=fontsize-4)
         ax.tick_params(axis='y', which='minor', labelsize=fontsize-4)
@@ -125,30 +144,16 @@ def plot_quantile(ax, values, color, q=0.9, linestyle="--", linewidth=0.9):
     return ax
 
 
-def plot_observations(ax, key, range, bins=10, marker="o", color="k", markersize=3, linewidth=0):
-    """
-    """
-    df = load_sample(select=True)
-    values = df[key].values
-    hist, edges = np.histogram(values, bins=bins, range=range, density=True)
-    centres = 0.5 * (edges[:-1] + edges[1:])
-    xlim = ax.get_xlim()
-    ylim = ax.get_ylim()
-    ax.plot(centres, hist, marker=marker, color=color, markersize=markersize, linewidth=linewidth,
-            label="OBSERVED")
-    ax.set_xlim(xlim)
-    ax.set_ylim(ylim)
-    return ax
-
-
 if __name__ == "__main__":
 
-    model_name = "blue"
-    burnin = 2000
-    n_samples = 20000
+    model_name = "blue_trunc"
+    burnin = 5000
+    n_samples = 100000
+    save = True
 
     k = 0.5
-    alphas = [3, 4, 5]
+    # alphas = [3, 4, 5]
+    alphas = [4, 6, 7]
 
     alpha = 4
     ks = [0, 0.5, 1]
@@ -164,5 +169,7 @@ if __name__ == "__main__":
     config = get_config()
     imagedir = os.path.join(config["directories"]["data"], "images")
     os.makedirs(imagedir, exist_ok=True)
-    filename = os.path.join(imagedir, "model_demo.png")
-    plt.savefig(filename, dpi=150, bbox_inches="tight")
+    filename = os.path.join(imagedir, f"model_demo_{model_name}.png")
+
+    if save:
+        plt.savefig(filename, dpi=150, bbox_inches="tight")

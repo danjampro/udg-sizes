@@ -88,12 +88,12 @@ class ParameterGrid(UdgSizesBase):
 
         return df
 
-    def summary_plot(self, index=None, show=True, bins=15):
+    def summary_plot(self, index=None, show=True, bins=15, metric="poisson_likelihood_2d"):
         """
         """
         dfo = load_sample(config=self.config, logger=self.logger, select=True)
         if index is None:
-            index = self._get_best_index()
+            index = self._get_best_index(metric=metric)
         df = self.load_sample(index, select=True)
 
         plt.figure(figsize=(8, 4))
@@ -115,8 +115,8 @@ class ParameterGrid(UdgSizesBase):
         if show:
             plt.show(block=False)
 
-    def slice_plot(self, df=None, x_key="rec_phys_alpha", z_key="uae_phys_k", metric="kstest_2d",
-                   show=True):
+    def slice_plot(self, df=None, x_key="rec_phys_alpha", z_key="uae_phys_k",
+                   metric="poisson_likelihood_2d",  show=True):
         """
         """
         if df is None:
@@ -173,11 +173,11 @@ class ParameterGrid(UdgSizesBase):
         cond = self.identify_confident(as_bool_array=True, **kwargs)
         return (self.load_sample(i) for i in range(self.n_permutations) if cond[i])
 
-    def get_best(self, **kwargs):
+    def get_best(self, metric="poisson_likelihood_2d", **kwargs):
         """
         """
         df = self.load_metrics()
-        index = self._get_best_index(df=df, **kwargs)
+        index = self._get_best_index(df=df, metric=metric, **kwargs)
         return df.iloc[index]
 
     def _setup_datadir(self, overwrite):

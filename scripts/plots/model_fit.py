@@ -8,8 +8,8 @@ from udgsizes.core import get_config
 from udgsizes.obs.sample import load_sample
 from udgsizes.fitting.grid import ParameterGrid
 
-FIGSIZE = 14, 5.2
-BINS = 15
+FIGSIZE = 14, 4.75
+BINS = 20
 BINS1D = 30
 BINS1D_OBS = 20
 # RANGE = (24, 27), (np.log10(3), np.log10(10))
@@ -78,9 +78,9 @@ if __name__ == "__main__":
     fig = plt.figure(figsize=FIGSIZE)
 
     spec = gridspec.GridSpec(ncols=10, nrows=2, figure=fig, hspace=0.35, wspace=1.6)
-    ax1 = fig.add_subplot(spec[:, 0:4])
-    ax2 = fig.add_subplot(spec[0, 4:10])
-    ax3 = fig.add_subplot(spec[1, 4:10])
+    ax1 = fig.add_subplot(spec[:, :4])
+    ax2 = fig.add_subplot(spec[0, 4:])
+    ax3 = fig.add_subplot(spec[1, 4:])
 
     # 2D model histogram
     xkey = "uae_obs_jig"
@@ -111,8 +111,8 @@ if __name__ == "__main__":
     c = 0.5*(e[1:] + e[:-1])
     err = np.sqrt(h)
     norm = h.sum() * (e[1]-e[0])
-    ax2.errorbar(c, h/norm, yerr=err/norm, elinewidth=1, markersize=3, color="b", linestyle=None,
-                 linewidth=0, marker="o")
+    ax2.errorbar(c, h/norm, yerr=err/norm, elinewidth=1, markersize=3, color="k", linestyle=None,
+                 linewidth=0, marker="o", zorder=10)
     if confs:
         conf = confs[xmkey]
         ax2.fill_between(conf["x"], conf["ymin"], conf["ymax"], color="b", alpha=0.2)
@@ -131,8 +131,8 @@ if __name__ == "__main__":
     c = 0.5*(e[1:] + e[:-1])
     err = np.sqrt(h)
     norm = h.sum() * (e[1]-e[0])
-    ax3.errorbar(c, h/norm, yerr=err/norm, elinewidth=1, markersize=3, color="b", linestyle=None,
-                 linewidth=0, marker="o", label="observed")
+    ax3.errorbar(c, h/norm, yerr=err/norm, elinewidth=1, markersize=3, color="k", linestyle=None,
+                 linewidth=0, marker="o", label="observed", zorder=10)
     if confs:
         conf = confs[xmkey]
         ax3.fill_between(conf["x"], conf["ymin"], conf["ymax"], color="b", alpha=0.2,

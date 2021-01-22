@@ -10,7 +10,7 @@ from scipy.ndimage.filters import gaussian_filter
 from udgsizes.core import get_config
 from udgsizes.fitting.grid import ParameterGrid
 
-
+SAVE = False
 CONFLINEKWARGS = {"linewidth": 1.3, "color": "springgreen", "linestyle": "--"}
 
 
@@ -286,6 +286,7 @@ if __name__ == "__main__":
     ax1.set_xlim(ax0.get_xlim())
     ax2.set_ylim(ax0.get_ylim())
 
-    plt.savefig(image_filename, dpi=150, bbox_inches="tight")
+    if SAVE:
+        plt.savefig(image_filename, dpi=150, bbox_inches="tight")
 
     plt.show(block=False)
