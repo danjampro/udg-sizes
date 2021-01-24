@@ -9,11 +9,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from udgsizes.base import UdgSizesBase
-from udgsizes.obs.sample import load_sample
-from udgsizes.model.empirical import Model
+from udgsizes.model.utils import create_model
 from udgsizes.fitting.metrics import MetricEvaluator
 from udgsizes.utils.selection import select_samples
 from udgsizes.utils.stats.confidence import confidence_threshold
+from udgsizes.fitting.utils.plotting import fit_summary_plot
 
 
 class ParameterGrid(UdgSizesBase):
@@ -24,13 +24,14 @@ class ParameterGrid(UdgSizesBase):
         super().__init__(*args, **kwargs)
         self.model_name = model_name
         self._model = None
+        model_class = self.config["models"][model_name]["type"]
 
         # Setup the directory to store model samples
         self._datadir = os.path.join(self.config["directories"]["data"], "models", "grid",
                                      self.model_name)
         self._metric_filename = os.path.join(self._datadir, "metrics.csv")
 
-        grid_config = self.config["grid"]
+        grid_config = self.config["grid"][model_class]
         self._quantity_names = list(grid_config["parameters"].keys())
         self._sample_kwargs = grid_config["sampling"]
 
@@ -88,32 +89,13 @@ class ParameterGrid(UdgSizesBase):
 
         return df
 
-    def summary_plot(self, index=None, show=True, bins=15, metric="poisson_likelihood_2d"):
+    def summary_plot(self, index=None, metric="poisson_likelihood_2d", **kwargs):
         """
         """
-        dfo = load_sample(config=self.config, logger=self.logger, select=True)
         if index is None:
             index = self._get_best_index(metric=metric)
         df = self.load_sample(index, select=True)
-
-        plt.figure(figsize=(8, 4))
-
-        ax0 = plt.subplot(2, 1, 1)
-        histkwargs = dict(density=True, histtype="step")
-        rng = (min(dfo['mueff_av'].min(), df['uae_obs_jig'].min()),
-               max(dfo['mueff_av'].max(), df['uae_obs_jig'].max()))
-        ax0.hist(dfo['mueff_av'].values, color="k", range=rng, bins=bins, **histkwargs)
-        ax0.hist(df['uae_obs_jig'].values, color="b", range=rng, **histkwargs)
-
-        ax1 = plt.subplot(2, 1, 2)
-        rng = (min(dfo['rec_arcsec'].min(), df['rec_obs_jig'].min()),
-               max(dfo['rec_arcsec'].max(), df['rec_obs_jig'].max()))
-        ax1.hist(dfo['rec_arcsec'].values, color="k", range=rng, **histkwargs)
-        ax1.hist(df['rec_obs_jig'].values, color="b", range=rng, **histkwargs)
-
-        plt.tight_layout()
-        if show:
-            plt.show(block=False)
+        return fit_summary_plot(df=df, config=self.config, logger=self.logger, **kwargs)
 
     def slice_plot(self, df=None, x_key="rec_phys_alpha", z_key="uae_phys_k",
                    metric="poisson_likelihood_2d",  show=True):
@@ -217,7 +199,7 @@ class ParameterGrid(UdgSizesBase):
         """
         # Create the model instance
         # Need to do this here so we don't run into pickle/multiprocessing problems
-        model = Model(self.model_name, config=self.config, logger=self.logger)
+        model = create_model(self.model_name, config=self.config, logger=self.logger)
 
         # Package parameter permutation
         hyper_params = self._get_parameter_dict(index)

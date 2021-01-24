@@ -11,7 +11,7 @@ class SbSizeModel(Model):
     """
     _par_order = "rec_phys", "uae_phys", "redshift", "index", "colour_rest"
 
-    def __init__(self, model_name, use_interpolated_redshift=True, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
     def sample(self, n_samples, hyper_params, filename=None, **kwargs):
@@ -29,6 +29,10 @@ class SbSizeModel(Model):
         if self._jiggler is not None:
             df['uae_obs_jig'], df['rec_obs_jig'], df["selected_jig"] = self._jiggler.jiggle(
                 uae=df['uae_obs'].values, rec=df['rec_obs'].values)
+
+        # Add stellar mass
+        df["logmstar"] = self._sb_calculator.logmstar_from_uae_phys(
+            uae_phys=df["uae_phys"], rec=df["rec_obs"], redshift=df["redshift"])
 
         # Save to file if filename is given
         if filename is not None:

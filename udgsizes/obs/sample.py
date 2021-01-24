@@ -35,3 +35,18 @@ def load_injections(config=None, logger=None):
     df = pd.read_csv(filename)
     logger.debug(f"Loaded {df.shape[0]} injections from file.")
     return df
+
+
+def load_gama_specobj(config=None, logger=None):
+    """
+    """
+    if config is None:
+        config = get_config()
+    if logger is None:
+        logger = get_logger()
+    filename = os.path.join(config['directories']['data'], 'input', 'gama_specobj.csv')
+    df = pd.read_csv(filename)
+    df["ra"] = df["RA"]
+    df["dec"] = df["DEC"]
+    logger.debug(f"Loaded {df.shape[0]} GAMA objects.")
+    return df

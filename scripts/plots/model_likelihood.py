@@ -9,21 +9,10 @@ from scipy.ndimage.filters import gaussian_filter
 
 from udgsizes.core import get_config
 from udgsizes.fitting.grid import ParameterGrid
+from udgsizes.utils.stats.confidence import confidence_threshold
 
 SAVE = False
 CONFLINEKWARGS = {"linewidth": 1.3, "color": "springgreen", "linestyle": "--"}
-
-
-def likelihood_quantile(values, q):
-    """
-    """
-    values_sorted = values.copy().reshape(-1)
-    values_sorted.sort()
-    values_sorted = values_sorted[::-1]
-    csum = np.cumsum(values_sorted)
-    total = csum[-1]
-    idx = np.argmin(abs(csum - q*total))
-    return values_sorted[idx]
 
 
 def plot_ext(ax, alpha=0.2):
@@ -53,10 +42,10 @@ def contour_plot(ax, df, smooth=False):
     if smooth:
         zzexp = gaussian_filter(zzexp, 0.5)
 
-    levels = (likelihood_quantile(zzexp, 0.999999426696856),
-              likelihood_quantile(zzexp, 0.997),
-              likelihood_quantile(zzexp, 0.95),
-              likelihood_quantile(zzexp, 0.68))
+    levels = (confidence_threshold(zzexp, 0.999999426696856),
+              confidence_threshold(zzexp, 0.997),
+              confidence_threshold(zzexp, 0.95),
+              confidence_threshold(zzexp, 0.68))
     colors = "k"
     contour_labels = r"$5\sigma$", r"$3\sigma$", r"$2\sigma$", r"$1\sigma$"
 
@@ -103,10 +92,10 @@ def contour_plot_gauss(ax, df, fontsize=15):
 
     zz = norm.pdf(np.vstack([x, y]).T).reshape(nx, ny)
 
-    levels = (likelihood_quantile(zz, 0.999999426696856),
-              likelihood_quantile(zz, 0.997),
-              likelihood_quantile(zz, 0.95),
-              likelihood_quantile(zz, 0.68))
+    levels = (confidence_threshold(zz, 0.999999426696856),
+              confidence_threshold(zz, 0.997),
+              confidence_threshold(zz, 0.95),
+              confidence_threshold(zz, 0.68))
     colors = "k"
     contour_labels = r"$5\sigma$", r"$3\sigma$", r"$2\sigma$", r"$1\sigma$"
 
@@ -151,11 +140,11 @@ def contour_plot_threshold(ax, df, legend=True, fontsize=15):
     zz = z.reshape(nx, ny)
     zzexp = np.exp(zz+1000)
 
-    levels = (likelihood_quantile(zzexp, 0.999999426696856),
-              likelihood_quantile(zzexp, 0.999936657516334),
-              likelihood_quantile(zzexp, 0.997),
-              likelihood_quantile(zzexp, 0.95),
-              likelihood_quantile(zzexp, 0.68))
+    levels = (confidence_threshold(zzexp, 0.999999426696856),
+              confidence_threshold(zzexp, 0.999936657516334),
+              confidence_threshold(zzexp, 0.997),
+              confidence_threshold(zzexp, 0.95),
+              confidence_threshold(zzexp, 0.68))
 
     labels = r">$5\sigma$", r"$5\sigma$", r"$4\sigma$", r"$3\sigma$", r"$2\sigma$",  r"$1\sigma$"
 

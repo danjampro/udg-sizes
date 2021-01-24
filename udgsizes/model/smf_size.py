@@ -2,7 +2,6 @@ from functools import partial
 import numpy as np
 
 from udgsizes.model.model import Model
-from udgsizes.utils.mstar import SbCalculator
 from udgsizes.utils.cosmology import kpc_to_arcsec
 
 
@@ -12,8 +11,6 @@ class SmfSizeModel(Model):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._sb_calculator = SbCalculator(population_name=self._pop_name, cosmo=self.cosmo,
-                                           mlratio=self.model_config["mlratio"])
 
     def sample(self, n_samples, hyper_params, filename=None, **kwargs):
         """ Sample the model, returning a pd.DataFrame containing the posterior distribution.
@@ -51,8 +48,7 @@ class SmfSizeModel(Model):
     def _log_likelihood_logmstar(self, logmstar, *args, **kwargs):
         """ Calculate the contribution to the likelihood from the stellar mass.
         """
-        # return np.log(self._likelihood_funcs["logmstar"](logmstar, *args, **kwargs))
-        return np.log(self._likelihood_funcs["logmstar"](logmstar))  # Already logged?
+        return np.log(self._likelihood_funcs["logmstar"](logmstar, *args, **kwargs))
 
     def _log_likelihood_recovery(self, rec_phys, logmstar, redshift):
         """ Calculate the contribution to the likelihood from the recovery efficiency.
@@ -72,7 +68,7 @@ class SmfSizeModel(Model):
         df["rec_obs"] = kpc_to_arcsec(df['rec_phys'], redshift=redshift, cosmo=self.cosmo)
         rec = df["rec_obs"].values
         logmstar = df["logmstar"].values
-        df["uae_phys"] = self._sb_calculator.calculate_uae(logmstar, rec, redshift)
+        df["uae_phys"] = self._sb_calculator.calculate_uae_phys(logmstar, rec, redshift)
         return super()._project_sample(df=df)
 
     def _get_uae_phys(self):

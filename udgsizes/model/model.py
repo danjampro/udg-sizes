@@ -12,6 +12,7 @@ from udgsizes.obs.recovery import load_recovery_efficiency
 from udgsizes.model.samplers.mcmc import Sampler
 from udgsizes.model.jiggle import Jiggler
 from udgsizes.obs.index_colour import load_classifier
+from udgsizes.utils.mstar import SbCalculator
 
 
 # Define this here so the model is pickleable
@@ -67,6 +68,9 @@ class Model(UdgSizesBase):
         self._pop_name = self.model_config["pop_name"]
         self._dimming = SBDimming(self._pop_name, config=self.config, logger=self.logger)
         self._redenning = Reddening(self._pop_name, config=self.config, logger=self.logger)
+
+        self._sb_calculator = SbCalculator(population_name=self._pop_name, cosmo=self.cosmo,
+                                           mlratio=self.model_config["mlratio"])
 
         # Prepare the sampler
         self._sampler = Sampler(par_names=self._par_order, config=self.config, logger=self.logger)
