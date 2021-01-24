@@ -2,8 +2,8 @@ from udgsizes.fitting.grid import ParameterGrid
 
 if __name__ == "__main__":
 
-    model_name = "blue_baldry_trunc"  # TODO: Move to command line arg
-    makeplots = True
+    model_name = "blue_baldry"  # TODO: Move to command line arg
+    makeplots = False
     metrics_ignore = ["kstest_2d"]  # Takes too long for whole grid
 
     p = ParameterGrid(model_name)
