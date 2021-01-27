@@ -13,6 +13,6 @@ if __name__ == "__main__":
 
         p = InterpolatedGrid(model_name)
 
-        with np.seterr(divide='ignore'):  # Silence annoying warnings
+        with np.errstate(divide='ignore'):  # Silence annoying warnings
             p.sample(overwrite=True)
         p.evaluate(metrics_ignore=metrics_ignore)
