@@ -81,6 +81,8 @@ class InterpolatedGrid(ParameterGrid):
     def _interpolate(self, xkey="uae_obs_jig", ykey="rec_obs_jig"):
         """
         """
+        self.logger.info("Interpolating grid.")
+
         # Get paramter permuations in a nxD array
         points = np.array(self.permutations)
 

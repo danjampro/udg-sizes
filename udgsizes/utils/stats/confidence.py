@@ -3,6 +3,7 @@ import numpy as np
 
 def confidence_threshold(values, q):
     """ Used for identifying models within a confidence interval defined by q. """
+    values = values[np.isfinite(values)]
     values_sorted = values.copy().reshape(-1)
     values_sorted.sort()
     values_sorted = values_sorted[::-1]
