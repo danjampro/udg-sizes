@@ -1,7 +1,7 @@
 import numpy as np
 
 # from udgsizes.fitting.grid import ParameterGrid
-from udgsizes.fitting.interpgrid import InterpolatedParameterGrid
+from udgsizes.fitting.interpgrid import InterpolatedGrid
 
 if __name__ == "__main__":
 
@@ -11,7 +11,7 @@ if __name__ == "__main__":
 
     for model_name in model_names:
 
-        p = InterpolatedParameterGrid(model_name)
+        p = InterpolatedGrid(model_name)
 
         with np.seterr(divide='ignore'):  # Silence annoying warnings
             p.sample(overwrite=True)
