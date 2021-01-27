@@ -47,32 +47,15 @@ models:
         initial: 0.3
 
   blue_trunc:
-    pop_name: blue
-    mlratio: 0.47
-    type: udgsizes.model.sb_size.SbSizeModel
+    base: blue
     variables:
       rec_phys:
         func: rec.power_trunc
         pars:
           r_trunc: 1.0
-        initial: 1.5
-      uae_phys:
-        initial: 25
-        func: uae.exponential
-      redshift:
-        func: redshift.mass
-        cosmo: True
-        min: 0.001
-        max: 0.5
-        initial: 0.02
-      index:
-        initial: 1
-      colour_rest:
-        initial: 0.3
 
   blue_baldry:
-    pop_name: blue
-    mlratio: 0.47
+    base: blue
     type: udgsizes.model.smf_size.SmfSizeModel
     variables:
       logmstar:
@@ -82,53 +65,27 @@ models:
           phi: 0.00071
           logm0: 10.72
         initial: 7
-      rec_phys:
-        func: rec.power
-        initial: 1.0
-      redshift:
-        func: redshift.mass
-        cosmo: True
-        min: 0.001
-        max: 0.5
-        initial: 0.02
-      index:
-        initial: 1
-      colour_rest:
-        initial: 0.3
 
   blue_baldry_trunc:
-    pop_name: blue
-    mlratio: 0.47
-    type: udgsizes.model.smf_size.SmfSizeModel
+    base: blue_baldry
     variables:
-      logmstar:
-        func: mstar.schechter_baldry
-        cosmo: True
-        pars:
-          phi: 0.00071
-          logm0: 10.72
-        initial: 7
       rec_phys:
         func: rec.power_trunc
         pars:
           r_trunc: 1.0
-        initial: 1.0
-      redshift:
-        func: redshift.mass
-        cosmo: True
-        min: 0.001
-        max: 0.5
-        initial: 0.02
-      index:
-        initial: 1
-      colour_rest:
-        initial: 0.3
+
+  blue_baldry_dwarf:
+    base: blue_baldry
+    variables:
+      logmstar:
+        pars:
+          logm0: 7.5
 
 grid:
+  n_samples: 100000
+  burnin: 5000
+
   udgsizes.model.sb_size.SbSizeModel:
-    sampling:
-      n_samples: 100000
-      burnin: 5000
     parameters:
       rec_phys:
         alpha:
@@ -142,9 +99,6 @@ grid:
           step: 0.05
 
   udgsizes.model.smf_size.SmfSizeModel:
-    sampling:
-      n_samples: 100000
-      burnin: 5000
     parameters:
       rec_phys:
         alpha:
@@ -154,5 +108,5 @@ grid:
       logmstar:
         a:
           min: -1.5
-          max: 1.0
-          step: 0.1
+          max: 2.0
+          step: 0.15

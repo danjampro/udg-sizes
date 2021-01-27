@@ -13,6 +13,7 @@ from udgsizes.model.samplers.mcmc import Sampler
 from udgsizes.model.jiggle import Jiggler
 from udgsizes.obs.index_colour import load_classifier
 from udgsizes.utils.mstar import SbCalculator
+from udgsizes.model.utils import get_model_config
 
 
 # Define this here so the model is pickleable
@@ -31,7 +32,8 @@ class Model(UdgSizesBase):
         self.cosmo = self.config["cosmology"]
 
         self.model_name = model_name
-        self.model_config = self.config["models"][self.model_name]
+
+        self.model_config = get_model_config(model_name, config=self.config)
 
         # Add model functions
         self._par_configs = {}
@@ -85,25 +87,7 @@ class Model(UdgSizesBase):
     def sample(self, n_samples, hyper_params, filename=None, **kwargs):
         """ Sample the model, returning a pd.DataFrame containing the posterior distribution.
         """
-        initial_state = self._get_initial_state()
-        log_likelihood = partial(self._log_likelihood, rec_params=hyper_params['rec_phys'],
-                                 uae_params=hyper_params['uae_phys'])
-        df = self._sampler.sample(func=log_likelihood, n_samples=n_samples,
-                                  initial_state=initial_state, **kwargs)
-        # Project to observable quantities
-        df = self._project_sample(df)
-
-        # Jiggle results
-        if self._jiggler is not None:
-            df['uae_obs_jig'], df['rec_obs_jig'], df["selected_jig"] = self._jiggler.jiggle(
-                uae=df['uae_obs'].values, rec=df['rec_obs'].values)
-
-        # Save to file if filename is given
-        if filename is not None:
-            self.logger.debug(f"Saving model samples to: {filename}.")
-            df.to_csv(filename)
-
-        return df
+        raise NotImplementedError
 
     def _log_likelihood(self, state, rec_params, uae_params):
         """ The log-likelihood for the full model.

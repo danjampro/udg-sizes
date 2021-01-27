@@ -9,7 +9,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from udgsizes.base import UdgSizesBase
-from udgsizes.model.utils import create_model
+from udgsizes.model.utils import create_model, get_model_config
 from udgsizes.fitting.metrics import MetricEvaluator
 from udgsizes.utils.selection import select_samples
 from udgsizes.utils.stats.confidence import confidence_threshold
@@ -24,50 +24,65 @@ class ParameterGrid(UdgSizesBase):
         super().__init__(*args, **kwargs)
         self.model_name = model_name
         self._model = None
-        model_class = self.config["models"][model_name]["type"]
+        model_class = get_model_config(model_name, config=self.config)["type"]
 
         # Setup the directory to store model samples
         self._datadir = os.path.join(self.config["directories"]["data"], "models", "grid",
                                      self.model_name)
         self._metric_filename = os.path.join(self._datadir, "metrics.csv")
 
-        grid_config = self.config["grid"][model_class]
-        self._quantity_names = list(grid_config["parameters"].keys())
-        self._sample_kwargs = grid_config["sampling"]
+        self._grid_config = self.config["grid"][model_class]
+        self._quantity_names = list(self._grid_config["parameters"].keys())
 
         # Create the metric evaluator object
         self._evaluator = MetricEvaluator(config=self.config, logger=self.logger)
 
-        # Get parameter permuations per quantity
-        self._par_names = {}
-        self._par_values = {}
-        for quantity_name, par_config in grid_config["parameters"].items():
-            self._par_names[quantity_name] = list(par_config.keys())
-            par_arrays = []
-            for par_name, par_range in par_config.items():
-                min = par_range['min']
-                max = par_range['max']
-                step = par_range['step']
-                par_arrays.append(list(np.arange(min, max+step, step)))
-            self._par_values[quantity_name] = list(itertools.product(*par_arrays))
+        self._parameters = {}
+        for quantity_name, quantity_config in self._grid_config["parameters"].items():
+            self._parameters[quantity_name] = []
+            for parameter_name, parameter_config in quantity_config.items():
+                self._parameters[quantity_name].append(parameter_name)
 
-        self.permumtations = list(itertools.product(*list(self._par_values.values())))
-        self.n_permutations = len(self.permumtations)
+        self.permutations = self._get_permuations()
+        self.n_permutations = len(self.permutations)
 
         self.logger.debug(f"Created ParameterGrid with {self.n_permutations} "
                           "parameter permutations.")
 
-    def sample(self, nproc=None, overwrite=False):
+    def _get_permuations(self, oversample=1):
+        """
+        """
+        parameter_values = []
+        for quantity_name, quantity_config in self._grid_config["parameters"].items():
+            for parameter_name, parameter_config in quantity_config.items():
+                min = parameter_config['min']
+                max = parameter_config['max']
+                step = parameter_config['step'] / oversample
+                parameter_values.append(np.arange(min, max+step, step))
+        permutations = list(itertools.product(*parameter_values))
+        return permutations
+
+    def sample(self, nproc=None, overwrite=False, n_samples=None, burnin=None, **kwargs):
         """
         """
         if nproc is None:
             nproc = self.config["defaults"]["nproc"]
+        if n_samples is None:
+            n_samples = self.config["grid"]["n_samples"]
+        if burnin is None:
+            burnin = self.config["grid"]["burnin"]
+
         self._setup_datadir(overwrite)
 
-        self.logger.debug(f"Sampling model grid with {self.n_permutations} parameter permutations"
-                          f" using {nproc} processes.")
+        settings = {"n_permutations ": self.n_permutations,
+                    "n_proc": nproc,
+                    "n_samples": n_samples,
+                    "burnin": burnin}
+        self.logger.debug(f"Sampling model grid with settings: {settings}")
+
+        func = partial(self._sample, n_samples=n_samples, burnin=burnin, **kwargs)
         with Pool(nproc) as pool:
-            pool.map(self._sample, np.arange(self.n_permutations))
+            pool.map(func, np.arange(self.n_permutations))
 
         self.logger.debug("Finished sampling parameter grid.")
 
@@ -78,7 +93,7 @@ class ParameterGrid(UdgSizesBase):
             nproc = self.config["defaults"]["nproc"]
         self.logger.debug(f"Evaluating metrics using {nproc} processes.")
 
-        fn = partial(self._evaluate, **kwargs)
+        fn = partial(self.evaluate_one, **kwargs)
         with Pool(nproc) as pool:
             result = pool.map(fn, np.arange(self.n_permutations))
 
@@ -162,6 +177,26 @@ class ParameterGrid(UdgSizesBase):
         index = self._get_best_index(df=df, metric=metric, **kwargs)
         return df.iloc[index]
 
+    def evaluate_one(self, index=None, metric="poisson_likelihood_2d", **kwargs):
+        """
+        """
+        if index is None:
+            index = self._get_best_index(metric=metric)
+
+        # Load model data
+        df = self.load_sample(index=index, select=True)
+
+        # Evaluate metrics
+        result = pd.Series(self._evaluator.evaluate(df, **kwargs))
+
+        par_array = self.permutations[index]
+        permdict = self._permutation_to_dict(par_array)
+        for quantity_name, parconf in permdict.items():
+            for par_name, par_value in parconf.items():
+                result[f"{quantity_name}_{par_name}"] = par_value
+
+        return result
+
     def _setup_datadir(self, overwrite):
         """
         """
@@ -180,12 +215,26 @@ class ParameterGrid(UdgSizesBase):
         basename = f"sample_{permutation_number}.csv"
         return os.path.join(self._datadir, basename)
 
-    def _get_parameter_dict(self, index):
+    def _permutation_to_dict(self, par_array):
         """
         """
-        par_array = self.permumtations[index]
-        pdict = {q: p for q, p in zip(self._quantity_names, par_array)}
-        return pdict
+        i = 0
+        result = {}
+        for qname, parnames in self._parameters.items():
+            result[qname] = {}
+            for parname in parnames:
+                result[qname][parname] = par_array[i]
+                i += 1
+        return result
+
+    def _parameter_dict_to_list(self, param_dict):
+        """ Order matters.
+        """
+        result = []
+        for qname, parnames in self._parameters.items():
+            for parname in parnames:
+                result.append(param_dict[qname][parname])
+        return result
 
     def _get_best_index(self, metric, df=None, func=np.argmax):
         """
@@ -194,7 +243,7 @@ class ParameterGrid(UdgSizesBase):
             df = self.load_metrics()
         return func(df[metric].values)
 
-    def _sample(self, index):
+    def _sample(self, index, n_samples, burnin):
         """
         """
         # Create the model instance
@@ -202,30 +251,13 @@ class ParameterGrid(UdgSizesBase):
         model = create_model(self.model_name, config=self.config, logger=self.logger)
 
         # Package parameter permutation
-        hyper_params = self._get_parameter_dict(index)
+        par_array = self.permutations[index]
+        hyper_params = self._permutation_to_dict(par_array)
 
         # Get filename for this permutation
         filename = self._get_sample_filename(index)
 
         # Sample the model for this parameter permutation
-        model.sample(hyper_params=hyper_params, filename=filename, **self._sample_kwargs)
-
-    def _evaluate(self, index, **kwargs):
-        """
-        """
-        filename = self._get_sample_filename(index)
-
-        # Load model data
-        df = pd.read_csv(filename)
-
-        # Evaluate metrics
-        result = pd.Series(self._evaluator.evaluate(df, **kwargs))
-
-        # Include hyper parameters in result
-        # TODO: Make this neater
-        hyper_params = self._get_parameter_dict(index)
-        for quantity_name, par_values in hyper_params.items():
-            for par_name, par_value in zip(self._par_names[quantity_name], par_values):
-                result[f"{quantity_name}_{par_name}"] = par_value
-
-        return result
+        model.sample(hyper_params=hyper_params, filename=filename, n_samples=n_samples,
+                     burnin=burnin)
+        self.logger.debug(f"Finished grid index {index} of {self.n_permutations}.")

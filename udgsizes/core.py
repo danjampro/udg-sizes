@@ -26,16 +26,26 @@ def get_config(config_dir=None, ignore_local=False, testing=False, parse=True, n
     if not ignore_local:
         with suppress(FileNotFoundError):
             config_local = _load_yaml(os.path.join(config_dir, f"{name}_local.yml"))
-            config = _update_config(config, config_local)
+            config = update_config(config, config_local)
     # Update the config with testing values
     if testing:
         with suppress(FileNotFoundError):
             config_test = _load_yaml(os.path.join(config_dir, "testing.yml"))
-            config = _update_config(config, config_test)
+            config = update_config(config, config_test)
     # Parse config
     if parse:
         config = _parse_config(config)
     return config
+
+
+def update_config(original, new):
+    """Recursively update nested dictionary d with u."""
+    for k, v in new.items():
+        if isinstance(v, abc.Mapping):
+            original[k] = update_config(original.get(k, {}), v)
+        else:
+            original[k] = v
+    return original
 
 
 def get_logger():
@@ -57,16 +67,6 @@ def _load_yaml(filename):
     with open(filename, 'r') as f:
         config = yaml.safe_load(f)
     return config
-
-
-def _update_config(d, u):
-    """Recursively update nested dictionary d with u."""
-    for k, v in u.items():
-        if isinstance(v, abc.Mapping):
-            d[k] = _update_config(d.get(k, {}), v)
-        else:
-            d[k] = v
-    return d
 
 
 def _parse_quantities(d):

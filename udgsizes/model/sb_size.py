@@ -46,8 +46,8 @@ class SbSizeModel(Model):
         """
         rec_phys, uae_phys, redshift, index, colour = state
         return (self._log_likelihood_recovery(rec_phys, uae_phys, redshift)
-                + self._log_likelihood_rec_phys(rec_phys, *rec_params)
-                + self._log_likelihood_uae_phys(uae_phys, *uae_params)
+                + self._log_likelihood_rec_phys(rec_phys, **rec_params)
+                + self._log_likelihood_uae_phys(uae_phys, **uae_params)
                 + self._log_likelihood_index_colour(index, colour, redshift)
                 + self._log_likelihood_redshift(redshift))
 
