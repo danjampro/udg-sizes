@@ -81,6 +81,11 @@ models:
         pars:
           logm0: 7.5
 
+  blue_baldry_highml:
+    base: blue_baldry
+    mlratio: 2
+
+
 grid:
   n_samples: 100000
   burnin: 5000

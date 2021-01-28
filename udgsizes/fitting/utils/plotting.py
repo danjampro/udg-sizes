@@ -1,4 +1,5 @@
 import numpy as np
+from scipy.ndimage.filters import gaussian_filter
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -102,6 +103,64 @@ def likelihood_threshold_plot_2d(df, xkey, ykey, metric="poisson_likelihood_2d",
         ax.legend(loc="lower left", frameon=False, fontsize=fontsize-4)
     if show:
         plt.show(block=False)
+
+    return ax
+
+
+def contour_plot(df, xkey, ykey, metric="poisson_likelihood_2d", ax=None, legend=True, xrange=None,
+                 yrange=None, fontsize=15, show=True, smooth=True, color="k", **kwargs):
+
+    if ax is None:
+        fig, ax = plt.subplots(**kwargs)
+
+    x = df[xkey].values
+    y = df[ykey].values
+    z = df[metric].values
+    extent = (y.min(), y.max(), x.min(), x.max())
+
+    nx = np.unique(x).size
+    ny = np.unique(y).size
+
+    zz = z.reshape(nx, ny)
+    zzexp = np.exp(zz+1000)
+
+    # Identify the thresholds and make thresholded image
+    levels = (confidence_threshold(zzexp, 0.999999426696856),
+              # confidence_threshold(zzexp, 0.999936657516334),
+              confidence_threshold(zzexp, 0.997),
+              # confidence_threshold(zzexp, 0.95),
+              confidence_threshold(zzexp, 0.68))
+    # labels = r"$5\sigma$", r"$4\sigma$", r"$3\sigma$", r"$2\sigma$",  r"$1\sigma$"
+    labels = r"$5\sigma$", r"$3\sigma$", r"$1\sigma$"
+    tmap = np.zeros_like(zz)
+    for level in levels:
+        tmap[zzexp >= level] += 1
+
+    if smooth:
+        zzexp = gaussian_filter(zzexp, 0.5)
+
+    cs = ax.contour(zzexp, linewidths=0.8, colors=color, extent=extent, levels=levels)
+    fmt = {}
+    for l, s in zip(cs.levels, labels):
+        fmt[l] = s
+    ax.clabel(cs, cs.levels, inline=True, fmt=fmt, fontsize=10)
+
+    # Format axes
+    if xrange is not None:
+        ax.set_xlim(*xrange)
+    if yrange is not None:
+        ax.set_ylim(*yrange)
+    if (xrange is not None) and (yrange is not None):
+        ax.set_aspect((xrange[1]-xrange[0])/(yrange[1]-yrange[0]))
+    ax.set_xlabel(ykey, fontsize=fontsize)
+    ax.set_ylabel(xkey, fontsize=fontsize)
+
+    if legend:
+        ax.legend(loc="lower left", frameon=False, fontsize=fontsize-4)
+    if show:
+        plt.show(block=False)
+
+    return ax
 
 
 def smf_plot(pbest, prange=None, which="schechter_baldry", pref=[-1.45], range=(4, 12), logy=True,

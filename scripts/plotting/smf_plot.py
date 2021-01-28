@@ -13,8 +13,8 @@ if __name__ == "__main__":
     image_filename = os.path.join(image_dir, f"smf_plot.png")
 
     fig, ax = plt.subplots()
-    smf_plot([1], pfixed=[0.00071, 7.5], prange=[[0], [5]], ax=ax)
-    smf_plot([-0.3], color="r", prange=[[-0.5], [-0.1]], ax=ax, plot_ref=False)
+    smf_plot([1], pfixed=[0.00071, 7.5], prange=[[-0.5], [100]], ax=ax)
+    smf_plot([-0.3], color="r", prange=[[-0.85], [-0.125]], ax=ax, plot_ref=False)
 
     if SAVE:
         plt.savefig(image_filename, dpi=150, bbox_inches="tight")
