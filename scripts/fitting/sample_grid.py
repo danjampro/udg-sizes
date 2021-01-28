@@ -6,7 +6,8 @@ from udgsizes.fitting.interpgrid import InterpolatedGrid
 if __name__ == "__main__":
 
     # TODO: Move to command line arg
-    model_names = "blue_baldry", "blue_baldry_dwarf", "blue_baldry_trunc"
+    # model_names = "blue_baldry", "blue_baldry_dwarf", "blue_baldry_trunc"
+    model_names = ["blue_baldry_highml"]
     metrics_ignore = ["kstest_2d"]  # Takes too long for whole grid
 
     for model_name in model_names:
