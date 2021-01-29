@@ -9,11 +9,34 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from udgsizes.base import UdgSizesBase
+from udgsizes.core import get_config
 from udgsizes.model.utils import create_model, get_model_config
 from udgsizes.fitting.metrics import MetricEvaluator
 from udgsizes.utils.selection import select_samples
 from udgsizes.utils.stats.confidence import confidence_threshold
 from udgsizes.fitting.utils.plotting import fit_summary_plot
+
+
+def _get_datadir(model_name, config=None):
+    """
+    """
+    if config is None:
+        config = get_config()
+    return os.path.join(config["directories"]["data"], "models", "grid", model_name)
+
+
+def _get_metric_filename(model_name, **kwargs):
+    """
+    """
+    datadir = _get_datadir(model_name, **kwargs)
+    return os.path.join(datadir, "metrics.csv")
+
+
+def load_metrics(model_name, **kwargs):
+    """
+    """
+    filename = _get_metric_filename(model_name, **kwargs)
+    return pd.read_csv(filename)
 
 
 class ParameterGrid(UdgSizesBase):
@@ -27,9 +50,8 @@ class ParameterGrid(UdgSizesBase):
         model_class = get_model_config(model_name, config=self.config)["type"]
 
         # Setup the directory to store model samples
-        self._datadir = os.path.join(self.config["directories"]["data"], "models", "grid",
-                                     self.model_name)
-        self._metric_filename = os.path.join(self._datadir, "metrics.csv")
+        self._datadir = _get_datadir(model_name=self.model_name, config=self.config)
+        self._metric_filename = _get_metric_filename(self.model_name, config=self.config)
 
         self._grid_config = self.config["grid"][model_class]
         self._quantity_names = list(self._grid_config["parameters"].keys())
@@ -152,7 +174,7 @@ class ParameterGrid(UdgSizesBase):
     def load_metrics(self):
         """
         """
-        return pd.read_csv(self._metric_filename)
+        return load_metrics(self.model_name, config=self.config)
 
     def identify_confident(self, metric="poisson_likelihood_2d", q=0.9, as_bool_array=False):
         """ Identify best models within confidence interval. """

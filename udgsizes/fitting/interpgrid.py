@@ -1,3 +1,5 @@
+import os
+import dill as pickle
 from collections import abc
 from functools import partial
 from multiprocessing import Pool
@@ -18,6 +20,14 @@ class InterpolatedGrid(ParameterGrid):
         self._bins = int(bins)
         self._interps = None
         self._evaluator = InterpolatedMetricEvaluator(config=self.config, logger=self.logger)
+        self._interp_filename = os.path.join(self._datadir, "interps.pkl")
+
+    @property
+    def interps(self):
+        if self._interps is None:
+            with open(self._interps_filename, "rb") as f:
+                self._interps = pickle.load(f)
+        return self._interps
 
     def sample(self, *args, **kwargs):
         """
@@ -33,7 +43,7 @@ class InterpolatedGrid(ParameterGrid):
         model = np.empty((self._bins, self._bins))
         for i in range(self._bins):
             for j in range(self._bins):
-                interp = self._interps[i * self._bins + j]
+                interp = self.interps[i * self._bins + j]
                 model[i, j] = interp(*params)
         return model
 
@@ -78,7 +88,7 @@ class InterpolatedGrid(ParameterGrid):
 
         return result
 
-    def _interpolate(self, xkey="uae_obs_jig", ykey="rec_obs_jig"):
+    def _interpolate(self, xkey="uae_obs_jig", ykey="rec_obs_jig", save=True):
         """
         """
         self.logger.info("Interpolating grid.")
@@ -105,6 +115,11 @@ class InterpolatedGrid(ParameterGrid):
         for i in range(self._bins):
             for j in range(self._bins):
                 self._interps.append(LinearNDInterpolator(points=points, values=values[:, i, j]))
+
+        # Pickle the list of interps
+        if save:
+            with open(self._interps_filename, "wb") as f:
+                pickle.dump(self._interps, f)
 
 
 class InterpolatedMetricEvaluator(MetricEvaluator):

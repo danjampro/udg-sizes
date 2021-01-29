@@ -8,7 +8,7 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from scipy.ndimage.filters import gaussian_filter
 
 from udgsizes.core import get_config
-from udgsizes.fitting.grid import ParameterGrid
+from udgsizes.fitting.grid import load_metrics
 from udgsizes.utils.stats.confidence import confidence_threshold
 
 SAVE = False
@@ -241,8 +241,7 @@ if __name__ == "__main__":
     image_dir = os.path.join(config["directories"]["data"], "images")
     image_filename = os.path.join(image_dir, f"model_likelihood_{model_name}.png")
 
-    grid = ParameterGrid(model_name)
-    df = grid.load_metrics()
+    df = load_metrics(model_name)
 
     x = np.random.rand(50)
     y = np.random.rand(50)
