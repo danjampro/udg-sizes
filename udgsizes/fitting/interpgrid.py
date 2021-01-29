@@ -15,12 +15,14 @@ from udgsizes.fitting.metrics import MetricEvaluator
 
 
 class InterpolatedGrid(ParameterGrid):
-    def __init__(self, model_name, bins=10, *args, **kwargs):
+    def __init__(self, model_name, bins=10, oversample=4, *args, **kwargs):
         super().__init__(model_name=model_name, *args, **kwargs)
         self._bins = int(bins)
         self._interps = None
         self._evaluator = InterpolatedMetricEvaluator(config=self.config, logger=self.logger)
-        self._interp_filename = os.path.join(self._datadir, "interps.pkl")
+        self._interps_filename = os.path.join(self._datadir, "interps.pkl")
+
+        self._permutations_interp = self._get_permuations(oversample=oversample)
 
     @property
     def interps(self):
@@ -54,11 +56,9 @@ class InterpolatedGrid(ParameterGrid):
             nproc = self.config["defaults"]["nproc"]
         self.logger.debug(f"Evaluating metrics using {nproc} processes.")
 
-        permutations = self._get_permuations(oversample=oversample)
-
         fn = partial(self.evaluate_one, **kwargs)
         with Pool(nproc) as pool:
-            result = pool.map(fn, [p for p in permutations])
+            result = pool.map(fn, [p for p in self._permutations_interp])
 
         df = pd.concat(result, axis=1).T
         if save:
@@ -87,6 +87,30 @@ class InterpolatedGrid(ParameterGrid):
                 result[f"{quantity_name}_{par_name}"] = par_value
 
         return result
+
+    def get_best_model(self, metric="poisson_likelihood_2d"):
+        """
+        """
+        index = self._get_best_index(metric=metric)
+        pars = self._permutation_to_dict(self._permutations_interp[index])
+        return self.create_model(pars)
+
+    def get_confident_models(self, **kwargs):
+        """
+        """
+        cond = self.identify_confident(as_bool_array=True, **kwargs)
+        models = []
+        for i, perm in enumerate(self._permutations_interp):
+            if cond[i]:
+                pars = self._permutation_to_dict(self._permutations_interp[i])
+                models.append(self.create_model(pars))
+        return models
+
+    def load_best_sample(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def load_confident_samples(self, *args, **kwargs):
+        raise NotImplementedError
 
     def _interpolate(self, xkey="uae_obs_jig", ykey="rec_obs_jig", save=True):
         """

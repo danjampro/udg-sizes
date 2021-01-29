@@ -28,11 +28,8 @@ SAVE = True
 def get_confidence_intervals(interpgrid, xkey="uae_obs_jig", ykey="rec_obs_jig"):
     """ Not pretty and it takes a while.
     """
-    pars_best = interpgrid.get_best()
-    pars_conf = interpgrid.get_confident()
-
-    model_best = interpgrid.create_model(pars_best)
-    models_conf = np.vstack([interpgrid.create_model(p) for p in pars_conf])
+    model_best = interpgrid.get_best_model()
+    models_conf = interpgrid.get_confident_models()
 
     prange = parameter_ranges['uae'], parameter_ranges['rec']
     bins = interpgrid._bins
@@ -44,7 +41,12 @@ def get_confidence_intervals(interpgrid, xkey="uae_obs_jig", ykey="rec_obs_jig")
 
     min_x = models_conf.min(axis=0)
     max_x = models_conf.max(axis=0)
+    min_y = models_conf.min(axis=1)
+    max_y = models_conf.max(axis=1)
 
+    result = {}
+    result[xkey] = {"ymin": min_x, "ymax": max_x, "ybest": best_x, "x": xx}
+    result[ykey] = {"ymin": min_y, "ymax": max_y, "ybest": best_y, "x": yy}
 
     return result
 
@@ -55,16 +57,14 @@ if __name__ == "__main__":
     metric = "poisson_likelihood_2d"
     confs = None
 
-    # grid = ParameterGrid(model_name)
-    grid = InterpolatedGrid(model_name)
-    dfm = grid.load_best_sample(metric=metric)
+    # Load observations
     dfo = load_sample()
 
-    keys = "uae_obs_jig", "rec_obs_jig"
-    range = {k: r for k, r in zip(keys, RANGE)}
-    dfs = grid.load_confident_samples(q=Q)
-    dfbest = grid.load_best_sample()
-    confs = get_confidence_intervals(dfs, dfbest, keys, range=range, bins=BINS1D)
+    # Load model grid
+    grid = InterpolatedGrid(model_name)
+    confs = get_confidence_intervals(grid)
+
+    assert False
 
     fig = plt.figure(figsize=FIGSIZE)
 
@@ -76,11 +76,10 @@ if __name__ == "__main__":
     # 2D model histogram
     xkey = "uae_obs_jig"
     ykey = "rec_obs_jig"
-    x = dfm[xkey].values
-    y = dfm[ykey].values
-    # y = np.log10(dfm[ykey].values)
-    ax1.hist2d(x, y, range=RANGE, bins=BINS, norm=NORM, density=True, cmap=CMAP,
-               label="best-fitting model")
+    model_best = grid.get_best_model()
+    extent = (parameter_ranges[0][0], parameter_ranges[0][1],
+              parameter_ranges[1][0], parameter_ranges[1][1])
+    ax1.imshow(model_best, origin="lower", extent=extent, cmap=CMAP, label="best-fitting model")
 
     xkey = "mueff_av"
     ykey = "rec_arcsec"
@@ -95,7 +94,6 @@ if __name__ == "__main__":
     # uae fit
     xmkey = "uae_obs_jig"
     xokey = "mueff_av"
-    xm = dfm[xmkey].values
     xo = dfo[xokey].values
     h, e = np.histogram(xo, range=RANGE[0], bins=BINS1D_OBS)
     c = 0.5*(e[1:] + e[:-1])
@@ -114,7 +112,6 @@ if __name__ == "__main__":
     # rec fit
     xmkey = "rec_obs_jig"
     xokey = "rec_arcsec"
-    xm = dfm[xmkey].values
     xo = dfo[xokey].values
     h, e = np.histogram(xo, range=RANGE[1], bins=BINS1D_OBS)
     c = 0.5*(e[1:] + e[:-1])
