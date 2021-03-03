@@ -63,7 +63,7 @@ def likelihood_threshold_plot(df, xkey, ykey, metric="poisson_likelihood_2d", ax
     nx = np.unique(x).size
     ny = np.unique(y).size
 
-    zz = z.reshape(ny, nx)
+    zz = z.reshape(nx, ny).T
     zzexp = np.exp(zz+1000)
 
     # Identify the thresholds and make thresholded image
@@ -104,7 +104,6 @@ def likelihood_threshold_plot(df, xkey, ykey, metric="poisson_likelihood_2d", ax
         ax.legend(loc="lower left", frameon=False, fontsize=fontsize-4)
     if show:
         plt.show(block=False)
-
     return ax
 
 

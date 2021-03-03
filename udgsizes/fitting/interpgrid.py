@@ -15,6 +15,7 @@ from udgsizes.fitting.metrics import MetricEvaluator
 
 
 class InterpolatedGrid(ParameterGrid):
+
     def __init__(self, model_name, bins=10, oversample=4, *args, **kwargs):
         super().__init__(model_name=model_name, *args, **kwargs)
         self._bins = int(bins)
@@ -38,7 +39,7 @@ class InterpolatedGrid(ParameterGrid):
         self._interpolate()
         return result
 
-    def create_model(self, param_dict):
+    def create_model(self, param_dict, transpose=False):
         """
         """
         params = self._parameter_dict_to_list(param_dict)
@@ -47,6 +48,8 @@ class InterpolatedGrid(ParameterGrid):
             for j in range(self._bins):
                 interp = self.interps[i * self._bins + j]
                 model[i, j] = interp(*params)
+        if transpose:
+            model = model.T
         return model
 
     def evaluate(self, oversample=4, nproc=None, save=True, **kwargs):
@@ -88,14 +91,15 @@ class InterpolatedGrid(ParameterGrid):
 
         return result
 
-    def get_best_model(self, metric="poisson_likelihood_2d"):
+    def get_best_model(self, metric="poisson_likelihood_2d", transpose=False):
         """
         """
         index = self._get_best_index(metric=metric)
         pars = self._permutation_to_dict(self._permutations_interp[index])
-        return self.create_model(pars)
+        print(pars)
+        return self.create_model(pars, transpose=transpose)
 
-    def get_confident_models(self, **kwargs):
+    def get_confident_models(self, transpose=False, **kwargs):
         """
         """
         cond = self.identify_confident(as_bool_array=True, **kwargs)
@@ -103,7 +107,7 @@ class InterpolatedGrid(ParameterGrid):
         for i, perm in enumerate(self._permutations_interp):
             if cond[i]:
                 pars = self._permutation_to_dict(self._permutations_interp[i])
-                models.append(self.create_model(pars))
+                models.append(self.create_model(pars, transpose=transpose))
         return models
 
     def load_best_sample(self, *args, **kwargs):

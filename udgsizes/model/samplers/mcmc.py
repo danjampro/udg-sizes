@@ -8,29 +8,25 @@ from udgsizes.base import UdgSizesBase
 
 class Sampler(UdgSizesBase):
 
-    def __init__(self, par_names=None, *args, **kwargs):
+    def __init__(self, par_names=None, n_walkers=10, *args, **kwargs):
         self.par_names = par_names
+        self.n_walkers = int(n_walkers)
         super().__init__(*args, **kwargs)
 
-    def sample(self, func, initial_state, n_walkers=10, burnin=500, n_samples=5000,
-               pool=None, peturb_factor=0.01):
+    def sample(self, func, initial_state, burnin=500, n_samples=5000, pool=None):
         """
         """
         self.logger.debug(f"Starting sampling with initial sate: {initial_state}.")
-        sampler = emcee.EnsembleSampler(n_walkers, len(initial_state), func, pool=pool)
-
-        # Peturb the initial state (required)
-        _initial_state = np.array([initial_state for _ in range(n_walkers)])
-        _initial_state += np.random.normal(0, peturb_factor*_initial_state)
+        sampler = emcee.EnsembleSampler(self.n_walkers, len(initial_state[0]), func, pool=pool)
 
         # Perform the burnin, updating initial state
         self.logger.debug(f"Performing burn-in for {burnin} iterations.")
-        sampler.run_mcmc(_initial_state, burnin, skip_initial_state_check=True, tune=True)
+        sampler.run_mcmc(initial_state, burnin, skip_initial_state_check=True, tune=True)
         sampler.reset()
 
         # Perform the main sampling
         self.logger.debug(f"Performing sampling for {n_samples} iterations.")
-        sampler.run_mcmc(None, nsteps=n_samples)
+        sampler.run_mcmc(None, nsteps=n_samples, skip_initial_state_check=True)
         samples = sampler.get_chain(flat=True)
 
         self.logger.debug(f"Sampling complete. Mean acceptance fraction:"

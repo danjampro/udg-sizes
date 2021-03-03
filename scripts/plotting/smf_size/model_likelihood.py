@@ -94,6 +94,8 @@ if __name__ == "__main__":
     # Marginal likelihood hists
     m1, s1 = marginal_likelihood_plot(ax1, df, xkey, range=xrange)
     m2, s2 = marginal_likelihood_plot(ax2, df, ykey, range=yrange, orientation="horizontal")
+    print(m1, s1)
+    print(m2, s2)
 
     # External parameters
     plot_ext(ax0)

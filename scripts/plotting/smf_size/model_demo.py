@@ -16,7 +16,7 @@ PLOTOBS = {"rec_obs_jig": "rec_arcsec",
            "uae_obs_jig": "mueff_av"}
 
 XLABELS = {"rec_phys": r"$\hat{r}_{e}\ \mathrm{[kpc]}$",
-           "logmstar": r"$\mathrm{log}_{10}M_{*} [\mathrm{M}_{\odot}]$",
+           "logmstar": r"$\mathrm{log}_{10}M_{*}\ [\mathrm{M}_{\odot}]$",
            "redshift": r"$z$",
            "rec_obs_jig": r"$\bar{r}_{e}\ \mathrm{[arcsec]}$",
            "uae_obs_jig": r"$\bar{\mu}_{e}\ \mathrm{[mag\ arcsec^{-2}]}$"}
@@ -184,7 +184,7 @@ def plot_quantile(ax, values, color, q=0.9, linestyle="--", linewidth=0.9):
 
 if __name__ == "__main__":
 
-    model_name = "blue_baldry"
+    model_name = "blue_baldry_trunc"
     burnin = 2000
     n_samples = 10000
     save = True
@@ -192,7 +192,7 @@ if __name__ == "__main__":
     k = 5
     alphas = [-1, -0.5, 0.5]
     alpha = -0.5
-    ks = [3, 5, 6]
+    ks = [3, 5, 7]
 
     model = create_model(model_name)
     # """

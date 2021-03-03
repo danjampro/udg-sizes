@@ -1,9 +1,10 @@
 import numpy as np
 from scipy import stats
 
+import powerlaw
+
 from udgsizes.base import UdgSizesBase
 from udgsizes.obs.sample import load_sample
-from udgsizes.utils.selection import select_samples
 from udgsizes.utils.stats.kstest import kstest_2d
 from udgsizes.utils.selection import parameter_ranges
 
@@ -11,7 +12,8 @@ from udgsizes.utils.selection import parameter_ranges
 class MetricEvaluator(UdgSizesBase):
     """ A class to calculate statistical metrics to compare model samples to observations. """
 
-    _metric_names = ('kstest_2d', 'poisson_likelihood_2d')
+    _metric_names = ('kstest_2d', 'poisson_likelihood_2d', 'udg_power_law', "n_udg", "n_selected",
+                     "n_total")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -68,8 +70,18 @@ class MetricEvaluator(UdgSizesBase):
         # Return overall log likelihood
         return np.log(probs).sum()
 
-    def _select_model_samples(self, df):
+    def _n_udg(self, df):
+        return df["is_udg"].sum()
+
+    def _n_selected(self, df):
+        return df["selected_jig"].sum()
+
+    def _n_total(self, df):
+        return df.shape[0]
+
+    def _udg_power_law(self, df, rec_phys_min=1.5):
         """
         """
-        cond = select_samples(uae=df['uae_obs_jig'].values, rec=df['rec_obs_jig'].values)
-        return df[cond].reset_index(drop=True)
+        rec_phys = df["rec_phys"].values[df["is_udg"].values == 1]
+        fit_result = powerlaw.Fit(rec_phys, xmin=rec_phys_min)
+        return fit_result.power_law.alpha

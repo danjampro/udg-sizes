@@ -1,3 +1,4 @@
+import itertools
 from contextlib import suppress
 from functools import partial
 
@@ -136,15 +137,40 @@ class Model(UdgSizesBase):
         """
         return self._par_configs[par_name][par_type]
 
-    def _get_initial_state(self):
-        """ Retrieve the intial state as a list.
+    def _get_initial_state(self, hyper_params):
+        """ Search for a set of initial parameters that provide a finite LL.
+        Returns:
+            list: A list of initial parameters.
         """
-        initial_state = list()
+        inival_matrix = []
         for par_name in self._par_order:
-            initial_state.append(self._get_par_config(par_name, "initial"))
-        _initial_state = [f"{a}:{b}" for a, b in zip(self._par_order, initial_state)]
+
+            # Get dict of starting value ranges
+            inival_dict = self._get_par_config(par_name, "initial")
+
+            # Append array of possible starting values
+            try:
+                inivals = [float(inival_dict)]  # The case where a single value is specified
+            except TypeError:
+                maxval = inival_dict["max"] + inival_dict["step"]
+                inivals = np.arange(inival_dict["min"], maxval, inival_dict["step"])
+            np.random.shuffle(inivals)
+            inival_matrix.append(inivals)
+
+        # Loop over inival permutations to find a finite set
+        inivals = None
+        for inival_perm in itertools.product(*inival_matrix):
+            if np.isfinite(self._log_likelihood(inival_perm, hyper_params=hyper_params)):
+                inivals = inival_perm
+                break
+        if inivals is None:
+            raise RuntimeError(f"No finite set of initial values for {self} with hyper params:"
+                               f" {hyper_params}.")
+
+        _initial_state = [f"{a}:{b}" for a, b in zip(self._par_order, inivals)]
         self.logger.debug(f"Initial state: {_initial_state}")
-        return initial_state
+
+        return inivals
 
     def _use_interpolated_redshift(self, n_samples=500):
         """ Interpolate the redshift function to make sampling faster.

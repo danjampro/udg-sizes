@@ -40,11 +40,20 @@ models:
         cosmo: True
         min: 0.001
         max: 0.5
-        initial: 0.02
+        initial:
+          min: 0.001
+          max: 0.051
+          step: 0.005
       index:
-        initial: 1
+        initial:
+          min: 0.5
+          max: 1.5
+          step: 0.5
       colour_rest:
-        initial: 0.3
+        initial:
+          min: 0.1
+          max: 0.5
+          step: 0.1
 
   blue_trunc:
     base: blue
@@ -64,7 +73,11 @@ models:
         pars:
           phi: 0.00071
           logm0: 10.72
-        initial: 7
+          min: 0
+        initial:
+          min: 5
+          max: 9
+          step: 0.2
 
   blue_baldry_trunc:
     base: blue_baldry
@@ -84,6 +97,31 @@ models:
   blue_baldry_highml:
     base: blue_baldry
     mlratio: 2
+
+  blue_baldry_shen:
+    base: blue_baldry
+    type: udgsizes.model.smf.SmfModel
+    variables:
+      rec_phys_offset:
+        func: rec.gaussian_offset_shen
+        initial:
+          min: -0.1
+          max: 0.1
+          step: 0.1
+
+  blue_baldry_shen_udg:
+    base: blue_baldry
+    type: udgsizes.model.smf.SmfModel
+    variables:
+      rec_phys_offset:
+        func: rec.gaussian_offset_shen
+        initial:
+          min: -0.1
+          max: 0.1
+          step: 0.1
+      logmstar:
+        pars:
+          min: 6
 
 
 grid:
@@ -115,3 +153,16 @@ grid:
           min: -1.5
           max: 1.5
           step: 0.2
+
+  udgsizes.model.smf.SmfModel:
+    parameters:
+      rec_phys_offset:
+        alpha:
+          min: 0.1
+          max: 0.35
+          step: 0.025
+      logmstar:
+        a:
+          min: -1.55
+          max: -1.35
+          step: 0.025

@@ -84,6 +84,13 @@ class ParameterGrid(UdgSizesBase):
         permutations = list(itertools.product(*parameter_values))
         return permutations
 
+    def check_initial_values(self):
+        """ Make sure a viable set of initial values exists for each model. """
+        for par_array in self.permutations:
+            hyper_params = self._permutation_to_dict(par_array)
+            model = create_model(self.model_name, config=self.config, logger=self.logger)
+            model._get_initial_state(hyper_params=hyper_params)
+
     def sample(self, nproc=None, overwrite=False, n_samples=None, burnin=None, **kwargs):
         """
         """
@@ -206,7 +213,7 @@ class ParameterGrid(UdgSizesBase):
             index = self._get_best_index(metric=metric)
 
         # Load model data
-        df = self.load_sample(index=index, select=True)
+        df = self.load_sample(index=index, select=False)
 
         # Evaluate metrics
         result = pd.Series(self._evaluator.evaluate(df, **kwargs))
@@ -218,6 +225,28 @@ class ParameterGrid(UdgSizesBase):
                 result[f"{quantity_name}_{par_name}"] = par_value
 
         return result
+
+    def marginal_likelihood_histogram(self, key, metric="poisson_likelihood_2d", ax=None, show=True,
+                                      **kwargs):
+        """
+        """
+        df = self.load_metrics()
+        x = df[key].values
+        z = np.exp(df[metric].values + 1000)
+
+        cond = np.isfinite(z)
+        x = x[cond]
+        z = z[cond]
+
+        # Plot marginal histogram
+        if ax is None:
+            fig, ax = plt.subplots()
+        ax.hist(x, weights=z, **kwargs)
+
+        if show:
+            plt.show(block=False)
+
+        return ax
 
     def _setup_datadir(self, overwrite):
         """
@@ -258,7 +287,7 @@ class ParameterGrid(UdgSizesBase):
                 result.append(param_dict[qname][parname])
         return result
 
-    def _get_best_index(self, metric, df=None, func=np.argmax):
+    def _get_best_index(self, metric, df=None, func=np.nanargmax):
         """
         """
         if df is None:
