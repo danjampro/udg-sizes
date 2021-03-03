@@ -54,16 +54,16 @@ class ParameterGrid(UdgSizesBase):
         self._metric_filename = _get_metric_filename(self.model_name, config=self.config)
 
         self._grid_config = self.config["grid"][model_class]
-        self._quantity_names = list(self._grid_config["parameters"].keys())
+        self.quantity_names = list(self._grid_config["parameters"].keys())
 
         # Create the metric evaluator object
         self._evaluator = MetricEvaluator(config=self.config, logger=self.logger)
 
-        self._parameters = {}
+        self.parameter_names = {}
         for quantity_name, quantity_config in self._grid_config["parameters"].items():
-            self._parameters[quantity_name] = []
+            self.parameter_names[quantity_name] = []
             for parameter_name, parameter_config in quantity_config.items():
-                self._parameters[quantity_name].append(parameter_name)
+                self.parameter_names[quantity_name].append(parameter_name)
 
         self.permutations = self._get_permuations()
         self.n_permutations = len(self.permutations)
@@ -199,12 +199,30 @@ class ParameterGrid(UdgSizesBase):
         cond = self.identify_confident(as_bool_array=True, **kwargs)
         return (self.load_sample(i) for i in range(self.n_permutations) if cond[i])
 
-    def get_best(self, metric="poisson_likelihood_2d", **kwargs):
+    def get_best_metrics(self, metric="poisson_likelihood_2d", **kwargs):
         """
         """
         df = self.load_metrics()
         index = self._get_best_index(df=df, metric=metric, **kwargs)
         return df.iloc[index]
+
+    def get_best_hyper_parameters(self, **kwargs):
+        """ Return the best fitting hyper parameters for a given model.
+        Args:
+            model_name (str): The name of the model.
+        Returns:
+            dict: The nested hyper parameter dictionary.
+        """
+        metrics = self.get_best_metrics(**kwargs)
+
+        hyper_params = {}
+        for quantity_name in self.quantity_names:
+            hyper_params[quantity_name] = {}
+            for parameter_name in self.parameter_names[quantity_name]:
+                flattened_name = f"{quantity_name}_{parameter_name}"
+                hyper_params[quantity_name][parameter_name] = metrics[flattened_name]
+
+        return hyper_params
 
     def evaluate_one(self, index=None, metric="poisson_likelihood_2d", **kwargs):
         """
@@ -271,7 +289,7 @@ class ParameterGrid(UdgSizesBase):
         """
         i = 0
         result = {}
-        for qname, parnames in self._parameters.items():
+        for qname, parnames in self.parameter_names.items():
             result[qname] = {}
             for parname in parnames:
                 result[qname][parname] = par_array[i]
@@ -282,7 +300,7 @@ class ParameterGrid(UdgSizesBase):
         """ Order matters.
         """
         result = []
-        for qname, parnames in self._parameters.items():
+        for qname, parnames in self.parameter_names.items():
             for parname in parnames:
                 result.append(param_dict[qname][parname])
         return result
