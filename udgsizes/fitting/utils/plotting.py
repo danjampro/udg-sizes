@@ -214,3 +214,28 @@ def plot_ext(ax, alpha=0.2, labels=True):
     label = "van der Burg +17 (groups)" if labels else None
     ax.axhspan(3.71-0.33, 3.71+0.33, color="b", alpha=alpha,
                label=label)
+
+
+def finite_model_plot(df, xkey, ykey, metric="poisson_likelihood_2d"):
+    """ Make a plot to show which permuations have finite metric values.
+    """
+    x = df[xkey].values
+    y = df[ykey].values
+    z = df[metric].values
+
+    cond = np.isfinite(z)
+
+    fig, ax = plt.subplots()
+    ax.plot(x[cond], y[cond], "b+")
+    ax.plot(x[~cond], y[~cond], "r+")
+
+    ax.set_xlabel(xkey)
+    ax.set_ylabel(ykey)
+    plt.title(metric)
+
+    for i, (x, y) in enumerate(zip(x, y)):
+        ax.text(x, y, f"{i}", fontsize=9, color="k")
+
+    plt.show(block=False)
+
+    return ax

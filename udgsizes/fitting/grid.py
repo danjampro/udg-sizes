@@ -224,7 +224,7 @@ class ParameterGrid(UdgSizesBase):
 
         return hyper_params
 
-    def evaluate_one(self, index=None, metric="poisson_likelihood_2d", **kwargs):
+    def evaluate_one(self, index=None, metric="poisson_likelihood_2d", thinning=None, **kwargs):
         """
         """
         if index is None:
@@ -232,6 +232,9 @@ class ParameterGrid(UdgSizesBase):
 
         # Load model data
         df = self.load_sample(index=index, select=False)
+
+        if thinning is not None:
+            df = df[::thinning].reset_index(drop=True)
 
         # Evaluate metrics
         result = pd.Series(self._evaluator.evaluate(df, **kwargs))
