@@ -199,7 +199,7 @@ def contour_plot(df, xkey, ykey, metric="poisson_likelihood_2d", ax=None, xrange
 
 def smf_plot(pbest, prange=None, which="schechter_baldry", pref=[-1.45], range=(4, 12), logy=True,
              nsamples=100, ax=None, show=True, config=None, pfixed_ref=[0.00071, 10.72],
-             pfixed=None, fitxmax=9, linewidth=1.5, color="b", plot_ref=True, **kwargs):
+             pfixed=None, fitxmax=15, linewidth=1.5, color="b", plot_ref=False, **kwargs):
     """
     """
     if config is None:
@@ -210,7 +210,7 @@ def smf_plot(pbest, prange=None, which="schechter_baldry", pref=[-1.45], range=(
         pfixed = pfixed_ref
 
     if ax is None:
-        fig, ax = plt.subplots(**kwargs)
+        fig, ax = plt.subplots()
     func = load_module(f"udgsizes.model.components.mstar.{which}")
     try:
         func = partial(func, min=0)
@@ -223,8 +223,9 @@ def smf_plot(pbest, prange=None, which="schechter_baldry", pref=[-1.45], range=(
     if plot_ref:
         yyref = [func(_, *pref, *pfixed_ref, cosmo=cosmo) for _ in xx]
         ax.plot(xx, yyref, 'k-', linewidth=linewidth)
+
     yy = [func(_, *pbest, *pfixed, cosmo=cosmo) for _ in xx[is_fit]]
-    ax.plot(xx[is_fit], yy, '--', linewidth=linewidth, color=color)
+    ax.plot(xx[is_fit], yy, '--', linewidth=linewidth, color=color, **kwargs)
 
     if prange is not None:
         mins = np.ones(is_fit.sum()) * np.inf

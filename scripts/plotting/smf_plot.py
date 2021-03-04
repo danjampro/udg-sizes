@@ -15,8 +15,12 @@ if __name__ == "__main__":
     fig, ax = plt.subplots()
     # smf_plot([1], pfixed=[0.00071, 7.5], prange=[[-0.5], [100]], ax=ax)
     # smf_plot([-0.3], color="r", prange=[[-0.85], [-0.125]], ax=ax, plot_ref=False)
-    smf_plot([-1.45], pfixed=[0.00071, 10.72], ax=ax)
-    smf_plot([-1.41], pfixed=[0.00132, 10.54], ax=ax)
+
+    smf_plot([-1.45], pfixed=[0.00071, 10.72], ax=ax, color="b", linestyle="-")
+    smf_plot([-1.41], pfixed=[0.00132, 10.54], ax=ax, color="r", linestyle="-")
+
+    smf_plot([-1.35], pfixed=[0.00071, 10.72], ax=ax, color="b", linestyle="--")
+    smf_plot([-1.45], pfixed=[0.00132, 10.54], ax=ax, color="r", linestyle="--")
 
 
     if SAVE:
