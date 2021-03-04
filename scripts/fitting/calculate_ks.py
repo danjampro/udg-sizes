@@ -1,3 +1,4 @@
+""" Script to update a single metric with optional thinning. """
 import argparse
 from udgsizes.fitting.grid import ParameterGrid
 

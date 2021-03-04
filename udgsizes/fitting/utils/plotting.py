@@ -1,3 +1,5 @@
+from functools import partial
+
 import numpy as np
 from scipy.ndimage.filters import gaussian_filter
 
@@ -45,6 +47,39 @@ def fit_summary_plot(df, dfo=None, show=True, bins=15, select=True, **kwargs):
         plt.show(block=False)
 
     return fig
+
+
+def plot_2d_hist(df, xkey, ykey, metric, ax=None, xrange=None, yrange=None, show=True):
+    """
+    """
+    if ax is None:
+        fig, ax = plt.subplots()
+
+    x = df[xkey].values
+    y = df[ykey].values
+    z = df[metric].values
+    extent = (x.min(), x.max(), y.min(), y.max())  # l r b t
+
+    nx = np.unique(x).size
+    ny = np.unique(y).size
+    zz = z.reshape(nx, ny).T
+
+    # Display the thresholded image
+    ax.imshow(zz, origin="lower", cmap="binary", extent=extent, aspect="auto")
+
+    # Format axes
+    if xrange is not None:
+        ax.set_xlim(*xrange)
+    if yrange is not None:
+        ax.set_ylim(*yrange)
+    if (xrange is not None) and (yrange is not None):
+        ax.set_aspect((xrange[1]-xrange[0])/(yrange[1]-yrange[0]))
+    ax.set_xlabel(xkey)
+    ax.set_ylabel(ykey)
+
+    if show:
+        plt.show(block=False)
+    return ax
 
 
 def likelihood_threshold_plot(df, xkey, ykey, metric="poisson_likelihood_2d", ax=None,
@@ -177,20 +212,25 @@ def smf_plot(pbest, prange=None, which="schechter_baldry", pref=[-1.45], range=(
     if ax is None:
         fig, ax = plt.subplots(**kwargs)
     func = load_module(f"udgsizes.model.components.mstar.{which}")
+    try:
+        func = partial(func, min=0)
+    except Exception:
+        pass
 
     xx = np.linspace(range[0], range[1], nsamples)
     is_fit = xx < fitxmax
 
     if plot_ref:
-        ax.plot(xx, func(xx, *pref, *pfixed_ref, cosmo=cosmo), 'k-', linewidth=linewidth)
-    ax.plot(xx[is_fit], func(xx[is_fit], *pbest, *pfixed, cosmo=cosmo), '--', linewidth=linewidth,
-            color=color)
+        yyref = [func(_, *pref, *pfixed_ref, cosmo=cosmo) for _ in xx]
+        ax.plot(xx, yyref, 'k-', linewidth=linewidth)
+    yy = [func(_, *pbest, *pfixed, cosmo=cosmo) for _ in xx[is_fit]]
+    ax.plot(xx[is_fit], yy, '--', linewidth=linewidth, color=color)
 
     if prange is not None:
         mins = np.ones(is_fit.sum()) * np.inf
         maxs = -mins.copy()
         for ps in prange:
-            ys = func(xx[is_fit], *ps, *pfixed, cosmo=cosmo)
+            ys = [func(_, *ps, *pfixed, cosmo=cosmo) for _ in xx[is_fit]]
             mins[:] = np.minimum(mins, ys)
             maxs[:] = np.maximum(maxs, ys)
         ax.fill_between(x=xx[is_fit], y1=mins, y2=maxs, alpha=0.2, color=color,
