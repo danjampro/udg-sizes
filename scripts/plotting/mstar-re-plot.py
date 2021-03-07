@@ -6,12 +6,12 @@ from udgsizes.utils.shen import logmstar_to_mean_rec
 
 
 # ALPHAS = [0.1, 0.14, 0.18]
-ALPHAS = [0.1, 0.14, 0.25]
+ALPHAS = [0.1, 0.14, 0.25, 0.3]
 
 
 if __name__ == "__main__":
 
-    model = SmfModel(model_name="blue_baldry_shen")
+    model = SmfModel(model_name="blue_sedgwick_shen")
     logmstar_shen = np.linspace(9, 11, 20)
 
     logmstar = np.linspace(5, 9, 20)
