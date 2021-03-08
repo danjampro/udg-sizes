@@ -23,6 +23,15 @@ dimming:
     fsps:
       logzsol: -0.66
 
+colour_model:
+  selection:
+    n_max: 2.5
+    z_max: 0.1
+  binning:
+    min: 8.5
+    max: 11
+    step: 0.5
+
 models:
   blue:
     pop_name: blue
@@ -111,7 +120,6 @@ models:
 
   blue_baldry_shen_udg:
     base: blue_baldry_shen
-    type: udgsizes.model.smf.SmfModel
     variables:
       logmstar:
         pars:
@@ -127,6 +135,13 @@ models:
         pars:
           phi: 0.00132
           logm0: 10.54
+
+  blue_sedgwick_shen_udg:
+    base: blue_sedgwick_shen
+    variables:
+      logmstar:
+        pars:
+          min: 6
 
 
 grid:

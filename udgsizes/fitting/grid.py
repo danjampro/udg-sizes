@@ -199,7 +199,7 @@ class ParameterGrid(UdgSizesBase):
         cond = self.identify_confident(as_bool_array=True, **kwargs)
         return (self.load_sample(i) for i in range(self.n_permutations) if cond[i])
 
-    def get_best_metrics(self, metric="poisson_likelihood_2d", **kwargs):
+    def get_best_metrics(self, metric="kstest_2d", **kwargs):
         """
         """
         df = self.load_metrics()
