@@ -116,7 +116,7 @@ class Model(UdgSizesBase):
         """
         raise NotImplementedError
 
-    def _log_likelihood_index_colour(self, index, colour_rest, redshift):
+    def _log_likelihood_index_colour(self, logmstar, index, colour_rest, redshift):
         """
         """
         colour_proj = colour_rest + self._redenning(redshift)
@@ -128,8 +128,11 @@ class Model(UdgSizesBase):
         # TODO: Streamline
         _index = np.array([index])
         _colour_proj = np.array([colour_proj])
+
+        # Return zero-likelihood if the sample does not satisfy selection criteria
         if not self._colour_classifier.predict(_index, colours=_colour_proj, which="blue")[0]:
             return -np.inf
+
         return np.log(self._colour_index_likelihood([index, colour_rest]))
 
     def _get_par_config(self, par_name, par_type):
@@ -191,6 +194,6 @@ class Model(UdgSizesBase):
         # Save time
         if "rec_obs" not in df.columns:
             df['rec_obs'] = kpc_to_arcsec(df['rec_phys'], redshift=redshift, cosmo=self.cosmo)
-        df['uae_obs'] = df['uae_phys'] + self._dimming(redshift=redshift)
-        df['colour_obs'] = df['colour_rest'] + self._redenning(redshift=redshift)
+        df['uae_obs'] = df['uae_phys']  # + self._dimming(redshift=redshift)
+        df['colour_obs'] = df['colour_rest']  # + self._redenning(redshift=redshift)
         return df

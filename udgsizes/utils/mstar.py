@@ -147,6 +147,13 @@ class EmpiricalSBCalculator(UdgSizesBase):
 
         return uae
 
+    def colour_index_likelihood(self, logmstar, colour_rest, index):
+        """
+        """
+        idx = get_logmstar_bin_index(logmstar, bins=self._logmstar_bins)
+        kde = self._kdes[idx]
+        return kde.pdf([colour_rest, index])
+
     # Plotting methods
 
     def summary_plot_ml(self):

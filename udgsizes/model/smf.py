@@ -21,7 +21,11 @@ class SmfModel(Model):
         self._ignore_recov = ignore_recov
         super().__init__(*args, **kwargs)
 
+        self._dimming = None
+        self._redenning = None
+
         self._sb_calculator = EmpiricalSBCalculator(config=self.config, logger=self.logger)
+        self._colour_index_likelihood = self._sb_calculator.colour_index_likelihood
 
     def sample(self, n_samples, hyper_params, filename=None, **kwargs):
         """ Sample the model, returning a pd.DataFrame containing the posterior distribution.
@@ -59,7 +63,7 @@ class SmfModel(Model):
 
         ll = (self._log_likelihood_rec_phys_offset(rec_phys_offset, logmstar=logmstar)
               + self._log_likelihood_logmstar(logmstar, **hyper_params['logmstar'])
-              + self._log_likelihood_index_colour(index, colour, redshift)
+              + self._log_likelihood_index_colour(logmstar, colour, index)
               + self._log_likelihood_redshift(redshift))
 
         if not self._ignore_recov:
@@ -86,6 +90,22 @@ class SmfModel(Model):
         uae_obs = self._sb_calculator.calculate_uae(logmstar, rec_obs, redshift, colour_rest)
 
         return np.log(self._recovery_efficiency(uae_obs, rec_obs))
+
+    def _log_likelihood_index_colour(self, logmstar, colour_rest, index):
+        """
+        """
+        colour_proj = colour_rest  # Neglect k-correction
+        if colour_proj > 1:
+            return -np.inf
+        if colour_proj < 0:
+            return -np.inf
+
+        # TODO: Streamline
+        _index = np.array([index])
+        _colour_proj = np.array([colour_proj])
+        if not self._colour_classifier.predict(_index, colours=_colour_proj, which="blue")[0]:
+            return -np.inf
+        return np.log(self._colour_index_likelihood(logmstar, colour_rest=colour_rest, index=index))
 
     def _get_par_config(self, par_name, par_type):
         """ Convenience function to get parameter config. """
