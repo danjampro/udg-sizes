@@ -14,7 +14,7 @@ from udgsizes.model.utils import create_model, get_model_config
 from udgsizes.fitting.metrics import MetricEvaluator
 from udgsizes.utils.selection import select_samples
 from udgsizes.utils.stats.confidence import confidence_threshold
-from udgsizes.fitting.utils.plotting import fit_summary_plot
+from udgsizes.fitting.utils.plotting import fit_summary_plot, plot_2d_hist
 
 
 def _get_datadir(model_name, config=None):
@@ -42,6 +42,7 @@ def load_metrics(model_name, **kwargs):
 class ParameterGrid(UdgSizesBase):
     """ N-dimensional nested parameter grid.
     """
+    _default_metric = "kstest_2d"
 
     def __init__(self, model_name, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -133,7 +134,7 @@ class ParameterGrid(UdgSizesBase):
 
         return df
 
-    def summary_plot(self, index=None, metric="poisson_likelihood_2d", **kwargs):
+    def summary_plot(self, index=None, metric=None, **kwargs):
         """
         """
         if index is None:
@@ -142,7 +143,7 @@ class ParameterGrid(UdgSizesBase):
         return fit_summary_plot(df=df, config=self.config, logger=self.logger, **kwargs)
 
     def slice_plot(self, df=None, x_key="rec_phys_alpha", z_key="uae_phys_k",
-                   metric="poisson_likelihood_2d",  show=True):
+                   metric=None,  show=True):
         """
         """
         if df is None:
@@ -163,7 +164,7 @@ class ParameterGrid(UdgSizesBase):
             plt.show(block=False)
         return fig, ax
 
-    def load_best_sample(self, metric="poisson_likelihood_2d", **kwargs):
+    def load_best_sample(self, metric=None, **kwargs):
         """
         """
         index_best = self._get_best_index(metric=metric)
@@ -183,11 +184,10 @@ class ParameterGrid(UdgSizesBase):
         """
         return load_metrics(self.model_name, config=self.config)
 
-    def identify_confident(self, metric="poisson_likelihood_2d", q=0.9, as_bool_array=False):
+    def identify_confident(self, metric=None, q=0.9, as_bool_array=False):
         """ Identify best models within confidence interval. """
         df = self.load_metrics()
         values = df[metric].values
-        values = np.exp(values+1000)
         threshold = confidence_threshold(values, q=q)
         cond = values >= threshold
         if as_bool_array:
@@ -224,7 +224,7 @@ class ParameterGrid(UdgSizesBase):
 
         return hyper_params
 
-    def evaluate_one(self, index=None, metric="poisson_likelihood_2d", thinning=None, **kwargs):
+    def evaluate_one(self, index=None, metric=None, thinning=None, **kwargs):
         """
         """
         if index is None:
@@ -247,13 +247,21 @@ class ParameterGrid(UdgSizesBase):
 
         return result
 
-    def marginal_likelihood_histogram(self, key, metric="poisson_likelihood_2d", ax=None, show=True,
+    def plot_2d_grid(self, xkey, ykey, metric=None, **kwargs):
+        """
+        """
+        if metric is None:
+            metric = self._default_metric
+        df = self.load_metrics()
+        return plot_2d_hist(df, xkey, ykey, metric=metric, **kwargs)
+
+    def marginal_likelihood_histogram(self, key, metric=None, ax=None, show=True,
                                       **kwargs):
         """
         """
         df = self.load_metrics()
         x = df[key].values
-        z = np.exp(df[metric].values + 1000)
+        z = df[metric].values
 
         cond = np.isfinite(z)
         x = x[cond]
@@ -308,9 +316,11 @@ class ParameterGrid(UdgSizesBase):
                 result.append(param_dict[qname][parname])
         return result
 
-    def _get_best_index(self, metric, df=None, func=np.nanargmax):
+    def _get_best_index(self, metric=None, df=None, func=np.nanargmax):
         """
         """
+        if metric is None:
+            metric = self._default_metric
         if df is None:
             df = self.load_metrics()
         return func(df[metric].values)
