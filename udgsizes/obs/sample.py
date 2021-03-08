@@ -80,8 +80,13 @@ def load_gama_masses(config, logmstar_min=6, logmstar_max=13, z_max=0.1, gi_max=
     df["ur"] = dfg["uminusr"].values
     df["gr"] = dfg["gminusi"] + dfg["absmag_i"] - dfg["absmag_r"]
     df["redshift"] = dfg["Z"]
-    df["n"] = dfg["GALINDEX_r"]
     df["logmstar_absmag_r"] = df["logmstar"] / df["absmag_r"]
+
+    df["n"] = dfg["GALINDEX_r"]
+
+    df["kcorr_g"] = dfg["KCORR_G"]
+    df["kcorr_r"] = dfg["KCORR_R"]
+    df["kcorr_i"] = dfg["KCORR_I"]
 
     # Apply selections
     logmstar = df["logmstar"].values

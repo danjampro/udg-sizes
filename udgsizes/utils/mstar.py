@@ -1,6 +1,7 @@
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
+from scipy.spatial import cKDTree
+import matplotlib.pyplot as plt
 from deepscan import sersic
 
 from udgsizes.base import UdgSizesBase
@@ -23,21 +24,29 @@ def ml_ratio_r(ri_rest, gi_rest):
 def get_logmstar_bins(config):
     """
     """
-    binning_config = config["colour_model"]["binning"]
+    binning_config = config["colour_model"]["binning"]["logmstar"]
     bins = np.arange(binning_config["min"], binning_config["max"], binning_config["step"])
     return bins
 
 
-def get_logmstar_bin_indices(logmstar, bins):
+def get_colour_bins(config):
     """
     """
-    return np.array([get_logmstar_bin_index(_, bins) for _ in logmstar])
+    binning_config = config["colour_model"]["binning"]["colour"]
+    bins = np.arange(binning_config["min"], binning_config["max"], binning_config["step"])
+    return bins
 
 
-def get_logmstar_bin_index(logmstar, bins):
+def get_bin_indices(values, bins):
+    """
+    """
+    return np.array([get_bin_index(_, bins) for _ in values])
+
+
+def get_bin_index(value, bins):
     """ Truncate at lower bin.
     """
-    return max(np.digitize([logmstar], bins=bins)[0] - 1, 0)
+    return max(np.digitize([value], bins=bins)[0] - 1, 0)
 
 
 class SbCalculator(UdgSizesBase):
@@ -97,20 +106,26 @@ class EmpiricalSBCalculator(UdgSizesBase):
         self._colour = df["gr"].values
         self._index = df["n"].values
         self._logmstar_absmag_ratio = df["logmstar_absmag_r"].values
+        self._redshift = df["redshift"].values
+        self._kcorrs_r = df["kcorr_r"].values
+        self._kcorrs_g = df["kcorr_g"].values
 
         self._logmstar_bins = get_logmstar_bins(config=self.config)
-        self._bin_indices = get_logmstar_bin_indices(self._logmstar, bins=self._logmstar_bins)
+        self._logmstar_bin_indices = get_bin_indices(self._logmstar, bins=self._logmstar_bins)
 
         self._ml_polys = {}
         self._create_ml_model()
 
-        self._kdes = {}
+        self._kdes_colour_index = {}
         self._create_colour_index_model()
+
+        self._mass_colour_tree = None
+        self._create_kcorr_model()
 
     # Properties
 
     @property
-    def n_bins(self):
+    def n_logmstar_bins(self):
         return self._logmstar_bins.size
 
     @property
@@ -127,7 +142,7 @@ class EmpiricalSBCalculator(UdgSizesBase):
         """
         """
         # Calculate absolute mag in r-band
-        idx = get_logmstar_bin_index(logmstar, bins=self._logmstar_bins)
+        idx = get_bin_index(logmstar, bins=self._logmstar_bins)
         absmag = logmstar / np.polyval(self._ml_polys[idx], colour_rest)
 
         # Calculate apparent magnitude
@@ -143,27 +158,41 @@ class EmpiricalSBCalculator(UdgSizesBase):
         uae_phys = self.calculate_uae_phys(logmstar, rec, redshift, colour_rest=colour_rest)
 
         # Apply k-correction
-        uae = uae_phys  # + self._dimmer(redshift)  # Neglect k-correction for now
+        uae = uae_phys + self.get_k_correction_r(logmstar, colour_rest, redshift=redshift)
 
         return uae
 
     def colour_index_likelihood(self, logmstar, colour_rest, index):
         """
         """
-        idx = get_logmstar_bin_index(logmstar, bins=self._logmstar_bins)
-        kde = self._kdes[idx]
+        idx = get_bin_index(logmstar, bins=self._logmstar_bins)
+        kde = self._kdes_colour_index[idx]
         return kde.pdf([colour_rest, index])
+
+    def get_k_correction_r(self, logmstar, colour_rest, redshift):
+        """
+        """
+        idx = self._mass_colour_tree.query([logmstar, colour_rest, redshift], k=1)[1]
+        return self._kcorrs_r[idx]
+
+    def get_k_correction_gr(self, logmstar, colour_rest, redshift):
+        """
+        """
+        idx = self._mass_colour_tree.query([logmstar, colour_rest, redshift], k=1)[1]
+        kr = self._kcorrs_r[idx]
+        kg = self._kcorrs_g[idx]
+        return kg - kr
 
     # Plotting methods
 
     def summary_plot_ml(self):
         """
         """
-        fig, ax = plt.subplots(figsize=(self.n_bins * 3, 3))
+        fig, ax = plt.subplots(figsize=(self.n_logmstar_bins * 3, 3))
         cc = np.linspace(self.colour_range[0], self.colour_range[1], 10)
-        for idx in range(self.n_bins):
-            ax = plt.subplot(1, self.n_bins, idx + 1)
-            cond = self._bin_indices == idx
+        for idx in range(self.n_logmstar_bins):
+            ax = plt.subplot(1, self.n_logmstar_bins, idx + 1)
+            cond = self._logmstar_bin_indices == idx
             ax.plot(self._colour[cond], self._logmstar_absmag_ratio[cond], "k+", markersize=1,
                     alpha=0.5)
             ax.plot(cc, np.polyval(self._ml_polys[idx], cc), "b--")
@@ -174,10 +203,10 @@ class EmpiricalSBCalculator(UdgSizesBase):
     def summary_plot_colour_index(self, nbins=20):
         """
         """
-        plt.figure(figsize=(self.n_bins * 3, 6))
+        plt.figure(figsize=(self.n_logmstar_bins * 3, 6))
 
-        for idx in range(self.n_bins):
-            cond = self._bin_indices == idx
+        for idx in range(self.n_logmstar_bins):
+            cond = self._logmstar_bin_indices == idx
 
             ax0 = plt.subplot(2, self._logmstar_bins.size, idx + 1)
             ax0.hist2d(self._colour[cond], self._index[cond], density=True, bins=nbins,
@@ -186,7 +215,7 @@ class EmpiricalSBCalculator(UdgSizesBase):
             xx, yy = np.meshgrid(np.linspace(*self.colour_range, 100),
                                  np.linspace(*self.index_range, 100))
             values = np.vstack([xx.reshape(-1), yy.reshape(-1)])
-            kde_values = self._kdes[idx](values).reshape(xx.shape)
+            kde_values = self._kdes_colour_index[idx](values).reshape(xx.shape)
 
             ax1 = plt.subplot(2, self._logmstar_bins.size, self._logmstar_bins.size + idx + 1)
             ax1.imshow(kde_values, extent=(*self.colour_range, *self.index_range),
@@ -198,15 +227,21 @@ class EmpiricalSBCalculator(UdgSizesBase):
     def _create_colour_index_model(self):
         """
         """
-        for idx in range(self.n_bins):
-            cond = self._bin_indices == idx
+        for idx in range(self.n_logmstar_bins):
+            cond = self._logmstar_bin_indices == idx
             values = np.vstack([self._colour[cond], self._index[cond]])
-            self._kdes[idx] = gaussian_kde(values)
+            self._kdes_colour_index[idx] = gaussian_kde(values)
 
     def _create_ml_model(self):
         """
         """
-        for idx in range(self.n_bins):
-            cond = self._bin_indices == idx
+        for idx in range(self.n_logmstar_bins):
+            cond = self._logmstar_bin_indices == idx
             p = np.polyfit(self._colour[cond], self._logmstar_absmag_ratio[cond], 1)
             self._ml_polys[idx] = p
+
+    def _create_kcorr_model(self):
+        """
+        """
+        values = np.vstack([self._logmstar, self._colour, self._redshift]).T
+        self._mass_colour_tree = cKDTree(values)

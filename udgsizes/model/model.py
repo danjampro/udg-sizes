@@ -194,6 +194,6 @@ class Model(UdgSizesBase):
         # Save time
         if "rec_obs" not in df.columns:
             df['rec_obs'] = kpc_to_arcsec(df['rec_phys'], redshift=redshift, cosmo=self.cosmo)
-        df['uae_obs'] = df['uae_phys']  # + self._dimming(redshift=redshift)
-        df['colour_obs'] = df['colour_rest']  # + self._redenning(redshift=redshift)
+        df['uae_obs'] = df['uae_phys'] + self._dimming(redshift=redshift)
+        df['colour_obs'] = df['colour_rest'] + self._redenning(redshift=redshift)
         return df

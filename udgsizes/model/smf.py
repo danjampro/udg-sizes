@@ -63,7 +63,7 @@ class SmfModel(Model):
 
         ll = (self._log_likelihood_rec_phys_offset(rec_phys_offset, logmstar=logmstar)
               + self._log_likelihood_logmstar(logmstar, **hyper_params['logmstar'])
-              + self._log_likelihood_index_colour(logmstar, colour, index)
+              + self._log_likelihood_index_colour(logmstar, colour, index, redshift)
               + self._log_likelihood_redshift(redshift))
 
         if not self._ignore_recov:
@@ -87,25 +87,27 @@ class SmfModel(Model):
         """ Calculate the contribution to the likelihood from the recovery efficiency. """
 
         rec_obs = kpc_to_arcsec(rec_phys, redshift=redshift, cosmo=self.cosmo)
-        uae_obs = self._sb_calculator.calculate_uae(logmstar, rec_obs, redshift, colour_rest)
+        uae_obs = self._sb_calculator.calculate_uae(logmstar=logmstar, rec=rec_obs,
+                                                    redshift=redshift, colour_rest=colour_rest)
 
         return np.log(self._recovery_efficiency(uae_obs, rec_obs))
 
-    def _log_likelihood_index_colour(self, logmstar, colour_rest, index):
+    def _log_likelihood_index_colour(self, logmstar, colour_rest, index, redshift):
         """
         """
-        colour_proj = colour_rest  # Neglect k-correction
-        if colour_proj > 1:
-            return -np.inf
-        if colour_proj < 0:
-            return -np.inf
+        if index > 2.5:
+            return -np.inf  # Late type galaxies
+
+        colour_proj = colour_rest + self._get_kcorrection_gr(logmstar, colour_rest, redshift)
 
         # TODO: Streamline
         _index = np.array([index])
         _colour_proj = np.array([colour_proj])
         if not self._colour_classifier.predict(_index, colours=_colour_proj, which="blue")[0]:
             return -np.inf
-        return np.log(self._colour_index_likelihood(logmstar, colour_rest=colour_rest, index=index))
+
+        return np.log(self._colour_index_likelihood(logmstar, colour_rest=colour_rest,
+                                                    index=index)[0])
 
     def _get_par_config(self, par_name, par_type):
         """ Convenience function to get parameter config. """
@@ -130,7 +132,16 @@ class SmfModel(Model):
 
         df["is_udg"] = (df["rec_phys"].values > 1.5) & (df["uae_phys"].values > 24)
 
-        return super()._project_sample(df=df)
+        # Apply k-corrections
+        kr = np.zeros_like(redshift)
+        kgr = np.zeros_like(redshift)
+        for i in range(redshift.size):
+            kr[i] = self._get_kcorrection_r(logmstar[i], colour_rest[i], redshift[i])
+            kgr[i] = self._get_kcorrection_gr(logmstar[i], colour_rest[i], redshift[i])
+        df['uae_obs'] = df['uae_phys'] + kr
+        df['colour_obs'] = df['colour_rest'] + kgr
+
+        return df
 
     def _mean_rec_phys(self, logmstar, alpha):
         """ Return the mean circularised effective radius for this stellar mass. """
@@ -141,3 +152,9 @@ class SmfModel(Model):
             gamma = shen.GAMMA * (10 ** 9) ** (shen.ALPHA - alpha)
             # Return power law
             return gamma * (10 ** logmstar) ** alpha
+
+    def _get_kcorrection_r(self, logmstar, colour_rest, redshift):
+        return self._sb_calculator.get_k_correction_r(logmstar, colour_rest, redshift)
+
+    def _get_kcorrection_gr(self, logmstar, colour_rest, redshift):
+        return self._sb_calculator.get_k_correction_gr(logmstar, colour_rest, redshift)
