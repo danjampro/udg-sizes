@@ -190,4 +190,4 @@ grid:
         a:
           min: -1.55
           max: -1.30
-          step: 0.025
+          step: 0.02
