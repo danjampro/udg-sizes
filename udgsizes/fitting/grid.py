@@ -247,7 +247,7 @@ class ParameterGrid(UdgSizesBase):
 
         return result
 
-    def plot_2d_grid(self, xkey, ykey, metric=None, **kwargs):
+    def plot_2d_hist(self, xkey, ykey, metric=None, **kwargs):
         """
         """
         if metric is None:
