@@ -172,25 +172,38 @@ class EmpiricalModel(Model):
 
     # Plotting methods
 
-    def summary_plot_ml(self):
+    def summary_plot_ml(self, figwidth=12, xrng=(-0.2, 1.1), yrng=(-0.55, -0.43)):
         """
         """
-        fig, ax = plt.subplots(figsize=(self.n_logmstar_bins * 3, 3))
+        figheight = figwidth / self.n_logmstar_bins
+        fig, ax = plt.subplots(figsize=(figwidth, figheight))
+
+        aspect = (xrng[1] - xrng[0]) / (yrng[1] - yrng[0])
+
         cc = np.linspace(self.colour_range[0], self.colour_range[1], 10)
+
         for idx in range(self.n_logmstar_bins):
             ax = plt.subplot(1, self.n_logmstar_bins, idx + 1)
+
             cond = self._logmstar_bin_indices == idx
             ax.plot(self._colour[cond], self._logmstar_absmag_ratio[cond], "k+", markersize=1,
                     alpha=0.5)
             ax.plot(cc, np.polyval(self._ml_polys[idx], cc), "b--")
-            ax.set_xlim(-0.2, 1.1)
-            ax.set_ylim(-0.55, -0.43)
+
+            ax.set_xlim(xrng)
+            ax.set_ylim(yrng)
+            ax.set_aspect(aspect)
+
         plt.show(block=False)
 
-    def summary_plot_colour_index(self, nbins=20):
+    def summary_plot_colour_index(self, nbins=20, figwidth=12):
         """
         """
-        plt.figure(figsize=(self.n_logmstar_bins * 3, 6))
+        figheight = figwidth / self.n_logmstar_bins * 2
+        plt.figure(figsize=(figwidth, figheight))
+
+        aspect = (self.colour_range[1] - self.colour_range[0]) / \
+            (self.index_range[1] - self.index_range[0])
 
         for idx in range(self.n_logmstar_bins):
             cond = self._logmstar_bin_indices == idx
@@ -198,6 +211,7 @@ class EmpiricalModel(Model):
             ax0 = plt.subplot(2, self._logmstar_bins.size, idx + 1)
             ax0.hist2d(self._colour[cond], self._index[cond], density=True, bins=nbins,
                        range=(self.colour_range, self.index_range))
+            ax0.set_aspect(aspect)
 
             xx, yy = np.meshgrid(np.linspace(*self.colour_range, 100),
                                  np.linspace(*self.index_range, 100))
@@ -206,7 +220,7 @@ class EmpiricalModel(Model):
 
             ax1 = plt.subplot(2, self._logmstar_bins.size, self._logmstar_bins.size + idx + 1)
             ax1.imshow(kde_values, extent=(*self.colour_range, *self.index_range),
-                       origin="lower")
+                       origin="lower", aspect=aspect)
         plt.show(block=False)
 
     # Private methods

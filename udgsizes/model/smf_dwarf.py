@@ -1,7 +1,7 @@
 from functools import partial
 import numpy as np
 
-from udgsizes.model.empirical import EmpiricalModel
+from udgsizes.model.model import Model
 from udgsizes.utils.cosmology import kpc_to_arcsec
 from udgsizes.utils import shen
 
@@ -12,7 +12,7 @@ def apply_rec_offset(rec_phys_mean, rec_phys_offset):
     return np.exp(np.log(rec_phys_mean) + rec_phys_offset)
 
 
-class SmfModel(EmpiricalModel):
+class SmfDwarfModel(Model):
 
     _par_order = "rec_phys_offset", "logmstar", "redshift", "index", "colour_rest"
 
@@ -46,6 +46,9 @@ class SmfModel(EmpiricalModel):
 
         return df
 
+    def calculate_uae_phys(self, logmstar, rec, redshift):
+        return self._sb_calculator.calculate_uae_phys(logmstar, rec, redshift)
+
     def _log_likelihood(self, state, hyper_params):
         """ The log-likelihood for the full model.
         """
@@ -59,9 +62,12 @@ class SmfModel(EmpiricalModel):
               + self._log_likelihood_index_colour(logmstar, colour, index, redshift)
               + self._log_likelihood_redshift(redshift))
 
+        if not np.isfinite(ll):
+            return -np.inf
+
         if not self._ignore_recov:
-            ll += self._log_likelihood_recovery(rec_phys, logmstar, redshift,
-                                                colour_rest=colour)
+            ll += self._log_likelihood_recovery(rec_phys, logmstar, redshift)
+
         if not np.isfinite(ll):
             return -np.inf
 
@@ -76,35 +82,36 @@ class SmfModel(EmpiricalModel):
         """ Calculate the contribution to the likelihood from the stellar mass. """
         return np.log(self._likelihood_funcs["logmstar"](logmstar, *args, **kwargs))
 
-    def _log_likelihood_recovery(self, rec_phys, logmstar, redshift, colour_rest):
-        """ Calculate the contribution to the likelihood from the recovery efficiency. """
-
+    def _log_likelihood_recovery(self, rec_phys, logmstar, redshift):
+        """ Calculate the contribution to the likelihood from the recovery efficiency.
+        """
+        # Calculate projected quantities
         rec_obs = kpc_to_arcsec(rec_phys, redshift=redshift, cosmo=self.cosmo)
-        uae_obs = self.calculate_uae(logmstar=logmstar, rec=rec_obs, redshift=redshift,
-                                     colour_rest=colour_rest)
+        uae_obs = self._sb_calculator.calculate_uae(logmstar, rec_obs, redshift)
 
-        print(rec_phys, logmstar, redshift, colour_rest, rec_obs, uae_obs)
-
+        # Return recovery fraction
         return np.log(self._recovery_efficiency(uae_obs, rec_obs))
 
     def _log_likelihood_index_colour(self, logmstar, colour_rest, index, redshift):
         """
         """
-        # Apply selection function for late-type galaxies
-        if index > 2.5:
+        colour_proj = colour_rest + self._redenning(redshift)
+
+        # Apply late-type galaxy selection criteria
+        if index >= 2.5:
             return -np.inf
 
-        # Calculate k-corrected colour
-        colour_proj = colour_rest + self.get_k_correction_gr(logmstar, colour_rest, redshift)
-
-        # Check if the sample meets the selection criteria
+        # TODO: Streamline
         _index = np.array([index])
         _colour_proj = np.array([colour_proj])
+
+        # Return zero-likelihood if the sample does not satisfy selection criteria
         if not self._colour_classifier.predict(_index, colours=_colour_proj, which="blue")[0]:
             return -np.inf
 
-        return np.log(self.colour_index_likelihood(logmstar, colour_rest=colour_rest,
-                                                   index=index)[0])
+        # TODO: Offset rest colour
+
+        return np.log(self._colour_index_likelihood([index, colour_rest]))
 
     def _get_par_config(self, par_name, par_type):
         """ Convenience function to get parameter config. """
@@ -129,23 +136,18 @@ class SmfModel(EmpiricalModel):
 
         rec = df["rec_obs"].values
         logmstar = df["logmstar"].values
-        colour_rest = df["colour_rest"].values
+
+        # Identify dwarfs
+        df["is_dwarf"] = df["logmstar"].values < 9
 
         # Identify UDGs
         df["uae_phys"] = [self.calculate_uae_phys(
-            logmstar[_], rec[_], redshift[_], colour_rest[_]) for _ in range(rec.size)]
+            logmstar[_], rec=rec[_], redshift=redshift[_]) for _ in range(rec.size)]
         df["is_udg"] = (df["rec_phys"].values > 1.5) & (df["uae_phys"].values > 24)
 
         # Apply k-corrections
-        kr = np.zeros_like(redshift)
-        kgr = np.zeros_like(redshift)
-        for i in range(redshift.size):
-            kr[i] = self.get_k_correction_r(logmstar=logmstar[i], colour_rest=colour_rest[i],
-                                            redshift=redshift[i])
-            kgr[i] = self.get_k_correction_gr(logmstar=logmstar[i], colour_rest=colour_rest[i],
-                                              redshift=redshift[i])
-        df['uae_obs'] = df['uae_phys'] + kr
-        df['colour_obs'] = df['colour_rest'] + kgr
+        df['uae_obs'] = df['uae_phys'] + self._dimming(redshift=redshift)
+        df['colour_obs'] = df['colour_rest'] + self._redenning(redshift=redshift)
 
         return df
 

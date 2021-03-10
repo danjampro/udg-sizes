@@ -57,11 +57,6 @@ class SmfSizeModel(Model):
         uae_obs = self._sb_calculator.calculate_uae(logmstar, rec_obs, redshift)
         return np.log(self._recovery_efficiency(uae_obs, rec_obs))
 
-    def _get_par_config(self, par_name, par_type):
-        """ Convenience function to get parameter config.
-        """
-        return self._par_configs[par_name][par_type]
-
     def _project_sample(self, df):
         """ Project physical units to observable quantities """
         redshift = df["redshift"].values

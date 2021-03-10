@@ -12,8 +12,8 @@ from udgsizes.utils.selection import parameter_ranges
 class MetricEvaluator(UdgSizesBase):
     """ A class to calculate statistical metrics to compare model samples to observations. """
 
-    _metric_names = ('kstest_2d', 'poisson_likelihood_2d', 'udg_power_law', "n_udg", "n_selected",
-                     "n_total")
+    _metric_names = ('kstest_2d', 'log_poisson_likelihood_2d', 'udg_power_law', "n_udg",
+                     "n_selected", "n_total")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -31,6 +31,9 @@ class MetricEvaluator(UdgSizesBase):
                 continue
             _metric_name = "_" + metric_name
             result[metric_name] = getattr(self, _metric_name)(df)
+
+        result["poisson_likelihood_2d"] = np.exp(result["log_poisson_likelihood_2d"] + 1000)
+
         return result
 
     def _kstest_2d(self, df):
@@ -43,7 +46,7 @@ class MetricEvaluator(UdgSizesBase):
         y2 = self._observations['rec_arcsec'].values
         return kstest_2d(x1, y1, x2, y2)
 
-    def _poisson_likelihood_2d(self, df, n_bins=10):
+    def _log_poisson_likelihood_2d(self, df, n_bins=10):
         """ Bin the model samples in 2D and renormalise to match the number of observations. This
         fixes the rate paramter of the Poisson distribution in each bin. The likelihood is
         evaluated by calculating the Poisson probability of the observed counts in each bin.
@@ -69,6 +72,9 @@ class MetricEvaluator(UdgSizesBase):
 
         # Return overall log likelihood
         return np.log(probs).sum()
+
+    def _n_dwarf(self, df):
+        return df["is_dwarf"].sum()
 
     def _n_udg(self, df):
         return df["is_udg"].sum()

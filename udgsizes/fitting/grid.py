@@ -255,10 +255,12 @@ class ParameterGrid(UdgSizesBase):
         df = self.load_metrics()
         return plot_2d_hist(df, xkey, ykey, metric=metric, **kwargs)
 
-    def marginal_likelihood_histogram(self, key, metric=None, ax=None, show=True,
-                                      **kwargs):
+    def marginal_likelihood_histogram(self, key, metric=None, ax=None, show=True, **kwargs):
         """
         """
+        if metric is None:
+            metric = self._default_metric
+            
         df = self.load_metrics()
         x = df[key].values
         z = df[metric].values
