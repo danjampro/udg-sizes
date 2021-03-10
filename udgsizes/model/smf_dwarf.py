@@ -151,12 +151,12 @@ class SmfDwarfModel(Model):
 
         return df
 
-    def _mean_rec_phys(self, logmstar, alpha):
+    def _mean_rec_phys(self, logmstar, alpha, logmstar_kink=8.7):
         """ Return the mean circularised effective radius for this stellar mass. """
-        if logmstar > 9:
+        if logmstar > logmstar_kink:
             return shen.logmstar_to_mean_rec(logmstar)
         else:
             # Calculate the normalisation term
-            gamma = shen.GAMMA * (10 ** 9) ** (shen.ALPHA - alpha)
+            gamma = shen.GAMMA * (10 ** logmstar_kink) ** (shen.ALPHA - alpha)
             # Return power law
             return gamma * (10 ** logmstar) ** alpha

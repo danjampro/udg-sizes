@@ -18,6 +18,7 @@ def load_sample(config=None, logger=None, select=False):
 
     if select:
         cond = select_samples(uae=df['mueff_av'].values, rec=df['rec_arcsec'].values)
+        cond &= df["is_red"].values == 0
         df = df[cond].reset_index(drop=True)
 
     logger.debug(f"Loaded {df.shape[0]} LSBGs from file.")
