@@ -19,8 +19,10 @@ if __name__ == "__main__":
     smf_plot([-1.45], pfixed=[0.00071, 10.72], ax=ax, color="b", linestyle="-")
     smf_plot([-1.41], pfixed=[0.00132, 10.54], ax=ax, color="r", linestyle="-")
 
-    smf_plot([-1.35], pfixed=[0.00071, 10.72], ax=ax, color="b", linestyle="--")
-    smf_plot([-1.45], pfixed=[0.00132, 10.54], ax=ax, color="r", linestyle="--")
+    smf_plot([-1.25], pfixed=[0.00071, 10.72], ax=ax, color="k", linestyle="--")
+
+    # smf_plot([-1.35], pfixed=[0.00071, 10.72], ax=ax, color="b", linestyle="--")
+    # smf_plot([-1.45], pfixed=[0.00132, 10.54], ax=ax, color="r", linestyle="--")
 
 
     if SAVE:

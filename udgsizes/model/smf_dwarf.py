@@ -5,6 +5,8 @@ from udgsizes.model.model import Model
 from udgsizes.utils.cosmology import kpc_to_arcsec
 from udgsizes.utils import shen
 
+COLOUR_OFFSET = 0.035
+
 
 def apply_rec_offset(rec_phys_mean, rec_phys_offset):
     """
@@ -111,7 +113,7 @@ class SmfDwarfModel(Model):
 
         # TODO: Offset rest colour
 
-        return np.log(self._colour_index_likelihood([index, colour_rest]))
+        return np.log(self._colour_index_likelihood([index, colour_rest + COLOUR_OFFSET]))
 
     def _get_par_config(self, par_name, par_type):
         """ Convenience function to get parameter config. """
