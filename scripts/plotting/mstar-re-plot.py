@@ -6,8 +6,8 @@ from udgsizes.utils.shen import logmstar_to_mean_rec
 
 
 # ALPHAS = [0.1, 0.14, 0.18]
-ALPHAS = [0.1, 0.14, 0.25, 0.3]
-LOGMSTAR_KINK = 8.7
+ALPHAS = [0.1, 0.14, 0.25, 0.3, 0.5]
+LOGMSTAR_KINK = 9
 
 
 if __name__ == "__main__":
