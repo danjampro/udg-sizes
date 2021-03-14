@@ -146,7 +146,7 @@ class Model(UdgSizesBase):
         return self._par_configs[par_name][par_type]
 
     def _get_initial_state(self, hyper_params, n_retries=3, retry_index=0):
-        """ Search for a set of initial parameters that provide a finite LL.
+        """ Search for a set of valid initial states that result in a finite LL.
         Returns:
             list: A list of initial parameters.
         """
