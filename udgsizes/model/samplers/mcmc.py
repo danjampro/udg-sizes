@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 
 import emcee
@@ -21,12 +20,12 @@ class Sampler(UdgSizesBase):
 
         # Perform the burnin, updating initial state
         self.logger.debug(f"Performing burn-in for {burnin} iterations.")
-        sampler.run_mcmc(initial_state, burnin, skip_initial_state_check=True, tune=True)
+        sampler.run_mcmc(initial_state, burnin, skip_initial_state_check=False, tune=True)
         sampler.reset()
 
         # Perform the main sampling
         self.logger.debug(f"Performing sampling for {n_samples} iterations.")
-        sampler.run_mcmc(None, nsteps=n_samples, skip_initial_state_check=True)
+        sampler.run_mcmc(None, nsteps=n_samples, skip_initial_state_check=False)
         samples = sampler.get_chain(flat=True)
 
         self.logger.debug(f"Sampling complete. Mean acceptance fraction:"
@@ -38,4 +37,16 @@ class Sampler(UdgSizesBase):
             for i, par_name in enumerate(self.par_names):
                 df[par_name] = samples[:, i]
             return df
+
         return samples
+
+    def validate_inital_state(self, initial_state):
+        """ Validate the initial state.
+        See https://github.com/dfm/emcee/blob/main/src/emcee/ensemble.py.
+        Args:
+            initial_state (list): The initial state.
+        Returns:
+            bool: True if valid, else False.
+        """
+        state = emcee.state.State(initial_state, copy=True)
+        return emcee.ensemble.walkers_independent(state.coords)

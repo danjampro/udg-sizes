@@ -25,8 +25,7 @@ class SmfDwarfModel(Model):
     def sample(self, n_samples, hyper_params, filename=None, **kwargs):
         """ Sample the model, returning a pd.DataFrame containing the posterior distribution.
         """
-        initial_state = np.array([self._get_initial_state(
-            hyper_params=hyper_params) for _ in range(self._sampler.n_walkers)])
+        initial_state = self._get_initial_state(hyper_params=hyper_params)
 
         log_likelihood = partial(self._log_likelihood, hyper_params=hyper_params)
 
@@ -68,7 +67,8 @@ class SmfDwarfModel(Model):
             return -np.inf
 
         if not self._ignore_recov:
-            ll += self._log_likelihood_recovery(rec_phys, logmstar, redshift)
+            with np.errstate(divide='ignore'):  # Silence warnings
+                ll += self._log_likelihood_recovery(rec_phys, logmstar, redshift)
 
         if not np.isfinite(ll):
             return -np.inf

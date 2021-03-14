@@ -5,7 +5,7 @@ from udgsizes.model.utils import create_model
 from udgsizes.fitting.grid import ParameterGrid
 
 REC_PHYS_MIN = 1.5
-MODEL_NAME = "blue_sedgwick_shen_final"
+MODEL_NAME = "blue_sedgwick_shen"
 UDG_MODEL_NAME = "blue_sedgwick_shen_udg"
 
 

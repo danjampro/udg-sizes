@@ -142,28 +142,6 @@ class ParameterGrid(UdgSizesBase):
         df = self.load_sample(index, select=True)
         return fit_summary_plot(df=df, config=self.config, logger=self.logger, **kwargs)
 
-    def slice_plot(self, df=None, x_key="rec_phys_alpha", z_key="uae_phys_k",
-                   metric=None,  show=True):
-        """
-        """
-        if df is None:
-            df = self.load_metrics()
-        x = df[x_key].values
-        y = df[metric].values
-        z = df[z_key].values
-
-        fig, ax = plt.subplots()
-        for uz in np.unique(z):
-            cond = z == uz
-            ax.plot(x[cond], y[cond], '-', alpha=0.5, linewidth=1)
-
-        ax.set_xlabel(x_key)
-        ax.set_ylabel(metric)
-
-        if show:
-            plt.show(block=False)
-        return fig, ax
-
     def load_best_sample(self, metric=None, **kwargs):
         """
         """
@@ -247,20 +225,45 @@ class ParameterGrid(UdgSizesBase):
 
         return result
 
-    def plot_2d_hist(self, xkey, ykey, metric=None, **kwargs):
+    # Plotting
+
+    def plot_2d_hist(self, xkey, ykey, metric=None, plot_indices=False, **kwargs):
         """
         """
         if metric is None:
             metric = self._default_metric
         df = self.load_metrics()
-        return plot_2d_hist(df, xkey, ykey, metric=metric, **kwargs)
+
+        ax = plot_2d_hist(df, xkey, ykey, metric=metric, **kwargs)
+        if plot_indices:
+            self.plot_indices(ax=ax, xkey=xkey, ykey=ykey)
+
+        return ax
+
+    def plot_indices(self, xkey, ykey, fontsize=8, color="b", ax=None, **kwargs):
+        """
+        """
+        if ax is None:
+            fig, ax = plt.subplots()
+
+        # Extract coordinates
+        # TODO: Remove dependence on metrics.csv
+        df = self.load_metrics()
+        xx = df[xkey].values
+        yy = df[ykey].values
+
+        for i, (x, y) in enumerate(zip(xx, yy)):
+            ax.text(x, y, f"{i}", fontsize=fontsize, color=color, va="center", ha="center",
+                    **kwargs)
+
+        return ax
 
     def marginal_likelihood_histogram(self, key, metric=None, ax=None, show=True, **kwargs):
         """
         """
         if metric is None:
             metric = self._default_metric
-            
+
         df = self.load_metrics()
         x = df[key].values
         z = df[metric].values

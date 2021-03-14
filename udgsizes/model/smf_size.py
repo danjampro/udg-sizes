@@ -16,6 +16,7 @@ class SmfSizeModel(Model):
         """ Sample the model, returning a pd.DataFrame containing the posterior distribution.
         """
         initial_state = self._get_initial_state()
+
         log_likelihood = partial(self._log_likelihood, rec_params=hyper_params['rec_phys'],
                                  smf_params=hyper_params['logmstar'])
         df = self._sampler.sample(func=log_likelihood, n_samples=n_samples,

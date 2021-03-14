@@ -58,7 +58,12 @@ def plot_2d_hist(df, xkey, ykey, metric, ax=None, xrange=None, yrange=None, show
     x = df[xkey].values
     y = df[ykey].values
     z = df[metric].values
-    extent = (x.min(), x.max(), y.min(), y.max())  # l r b t
+
+    xsorted = np.unique(x)
+    ysorted = np.unique(y)
+    dx2 = (xsorted[1] - xsorted[0]) / 2
+    dy2 = (ysorted[1] - ysorted[0]) / 2
+    extent = (x.min() - dx2, x.max() + dx2, y.min() - dy2, y.max() + dy2)  # l r b t
 
     nx = np.unique(x).size
     ny = np.unique(y).size

@@ -1,4 +1,5 @@
 import itertools
+import random
 from contextlib import suppress
 from functools import partial
 
@@ -85,6 +86,10 @@ class Model(UdgSizesBase):
         if use_interpolated_redshift:
             self._use_interpolated_redshift()
 
+    @property
+    def n_parameters(self):
+        return len(self._par_order)
+
     def sample(self, n_samples, hyper_params, filename=None, **kwargs):
         """ Sample the model, returning a pd.DataFrame containing the posterior distribution.
         """
@@ -140,11 +145,12 @@ class Model(UdgSizesBase):
         """
         return self._par_configs[par_name][par_type]
 
-    def _get_initial_state(self, hyper_params):
+    def _get_initial_state(self, hyper_params, n_retries=3, retry_index=0):
         """ Search for a set of initial parameters that provide a finite LL.
         Returns:
             list: A list of initial parameters.
         """
+        self.logger.info("Determining initial state before sampling.")
         inival_matrix = []
         for par_name in self._par_order:
 
@@ -157,21 +163,49 @@ class Model(UdgSizesBase):
             except TypeError:
                 maxval = inival_dict["max"] + inival_dict["step"]
                 inivals = np.arange(inival_dict["min"], maxval, inival_dict["step"])
-            np.random.shuffle(inivals)
             inival_matrix.append(inivals)
 
+        # Get random permutations of potential initial states
+        perms = list(itertools.product(*inival_matrix))
+        random.shuffle(perms)
+
         # Loop over inival permutations to find a finite set
-        inivals = None
-        for inival_perm in itertools.product(*inival_matrix):
-            if np.isfinite(self._log_likelihood(inival_perm, hyper_params=hyper_params)):
-                inivals = inival_perm
+        inivals = []
+        for inival_perm in perms:
+
+            # Check if we have finished
+            if len(inivals) == self._sampler.n_walkers:
                 break
-        if inivals is None:
-            raise RuntimeError(f"No finite set of initial values for {self} with hyper params:"
+
+            # Check if any of the values are already in the existing states
+            if len(inivals) != 0:
+                should_skip = False
+                for i in range(self.n_parameters):
+                    if all([_[i] == inival_perm[i] for _ in inivals]):
+                        should_skip = True
+                        break
+                if should_skip:
+                    continue
+
+            # Check if the state returns a finite likelihood
+            if np.isfinite(self._log_likelihood(inival_perm, hyper_params=hyper_params)):
+                inivals.append(inival_perm)
+                continue
+
+        if len(inivals) != self._sampler.n_walkers:
+            raise RuntimeError(f"Unable to determine initial state for {self} with hyper params:"
                                f" {hyper_params}.")
 
-        _initial_state = [f"{a}:{b}" for a, b in zip(self._par_order, inivals)]
-        self.logger.debug(f"Initial state: {_initial_state}")
+        if not self._sampler.validate_inital_state(inivals):
+            if retry_index >= n_retries:
+                raise RuntimeError("Invalid initial state after max retries reached.")
+
+            # Try again!
+            self.logger.warning("Initial state invalid. Retrying.")
+            return self._get_initial_state(hyper_params, retry_index=retry_index + 1)
+
+        state_dict = [f"{a}:{b}" for a, b in zip(self._par_order, inivals)]
+        self.logger.debug(f"Successfully determined initial state: {state_dict}")
 
         return inivals
 
