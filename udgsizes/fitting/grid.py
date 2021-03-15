@@ -1,15 +1,18 @@
 """ Grid of model parameters """
 import os
 import shutil
+import itertools
+from contextlib import suppress
 from functools import partial
 from multiprocessing import Pool
-import itertools
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
 from udgsizes.base import UdgSizesBase
 from udgsizes.core import get_config
+from udgsizes.utils.library import load_module
 from udgsizes.model.utils import create_model, get_model_config
 from udgsizes.fitting.metrics import MetricEvaluator
 from udgsizes.utils.selection import select_samples
@@ -160,7 +163,29 @@ class ParameterGrid(UdgSizesBase):
     def load_metrics(self):
         """
         """
-        return load_metrics(self.model_name, config=self.config)
+        df = load_metrics(self.model_name, config=self.config)
+
+        prior = np.ones(df.shape[0])
+
+        for quantity_name in self.quantity_names:
+            for parameter_name in self.parameter_names[quantity_name]:
+                try:
+                    prior_config = self._grid_config["priors"][quantity_name][parameter_name]
+                except KeyError:
+                    continue
+                flattened_name = f"{quantity_name}_{parameter_name}"
+
+                func_name = prior_config["func"]
+                self.logger.debug(f"Applying prior to {flattened_name}: {func_name}")
+
+                func = load_module(func_name)
+                with suppress(KeyError):
+                    func = partial(func, **prior_config["pars"])
+
+                prior *= func(df[flattened_name].values)
+
+        df["prior"] = prior
+        return df
 
     def identify_confident(self, metric=None, q=0.9, as_bool_array=False):
         """ Identify best models within confidence interval. """
@@ -227,14 +252,22 @@ class ParameterGrid(UdgSizesBase):
 
     # Plotting
 
-    def plot_2d_hist(self, xkey, ykey, metric=None, plot_indices=False, **kwargs):
+    def plot_2d_hist(self, xkey, ykey, metric=None, plot_indices=False, apply_prior=False,
+                     **kwargs):
         """
         """
         if metric is None:
             metric = self._default_metric
         df = self.load_metrics()
 
-        ax = plot_2d_hist(df, xkey, ykey, metric=metric, **kwargs)
+        metrics = df[metric].values
+        if apply_prior:
+            metrics *= df["prior"].values
+
+        ax = plot_2d_hist(df[xkey].values, df[ykey].values, metrics, **kwargs)
+        ax.set_xlabel(xkey)
+        ax.set_ylabel(ykey)
+
         if plot_indices:
             self.plot_indices(ax=ax, xkey=xkey, ykey=ykey)
 
@@ -258,7 +291,8 @@ class ParameterGrid(UdgSizesBase):
 
         return ax
 
-    def marginal_likelihood_histogram(self, key, metric=None, ax=None, show=True, **kwargs):
+    def marginal_likelihood_histogram(self, key, metric=None, ax=None, show=True, apply_prior=False,
+                                      **kwargs):
         """
         """
         if metric is None:
@@ -267,6 +301,9 @@ class ParameterGrid(UdgSizesBase):
         df = self.load_metrics()
         x = df[key].values
         z = df[metric].values
+
+        if apply_prior:
+            z *= df["prior"].values
 
         cond = np.isfinite(z)
         x = x[cond]

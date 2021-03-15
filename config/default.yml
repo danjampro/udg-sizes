@@ -207,3 +207,10 @@ grid:
           min: -1.55
           max: -1.20
           step: 0.02
+    priors:
+      logmstar:
+        a:
+          func: udgsizes.model.priors.gaussian
+          pars:
+            mu: -1.41
+            sigma: 0.05

@@ -49,15 +49,11 @@ def fit_summary_plot(df, dfo=None, show=True, bins=15, select=True, **kwargs):
     return fig
 
 
-def plot_2d_hist(df, xkey, ykey, metric, ax=None, xrange=None, yrange=None, show=True):
+def plot_2d_hist(x, y, z, ax=None, xrange=None, yrange=None, show=True):
     """
     """
     if ax is None:
         fig, ax = plt.subplots()
-
-    x = df[xkey].values
-    y = df[ykey].values
-    z = df[metric].values
 
     xsorted = np.unique(x)
     ysorted = np.unique(y)
@@ -79,8 +75,6 @@ def plot_2d_hist(df, xkey, ykey, metric, ax=None, xrange=None, yrange=None, show
         ax.set_ylim(*yrange)
     if (xrange is not None) and (yrange is not None):
         ax.set_aspect((xrange[1]-xrange[0])/(yrange[1]-yrange[0]))
-    ax.set_xlabel(xkey)
-    ax.set_ylabel(ykey)
 
     if show:
         plt.show(block=False)
