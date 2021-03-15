@@ -7,12 +7,12 @@ from udgsizes.base import UdgSizesBase
 
 class Sampler(UdgSizesBase):
 
-    def __init__(self, par_names=None, n_walkers=10, *args, **kwargs):
+    def __init__(self, par_names=None, n_walkers=100, *args, **kwargs):
         self.par_names = par_names
         self.n_walkers = int(n_walkers)
         super().__init__(*args, **kwargs)
 
-    def sample(self, func, initial_state, burnin=500, n_samples=5000, pool=None):
+    def sample(self, func, initial_state, burnin=500, n_samples=5000, pool=None, get_sampler=False):
         """
         """
         self.logger.debug(f"Starting sampling with initial sate: {initial_state}.")
@@ -36,7 +36,10 @@ class Sampler(UdgSizesBase):
             df = pd.DataFrame()
             for i, par_name in enumerate(self.par_names):
                 df[par_name] = samples[:, i]
-            return df
+            samples = df
+
+        if get_sampler:
+            return samples, sampler
 
         return samples
 
