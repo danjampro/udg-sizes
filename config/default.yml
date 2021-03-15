@@ -138,8 +138,8 @@ models:
         func: mstar.schechter_baldry
         cosmo: True
         pars:
-          phi: 0.00132
-          logm0: 10.54
+          phi: 0.00130
+          logm0: 10.56
 
   blue_sedgwick_shen_high_ml:
     base: blue_sedgwick_shen
@@ -206,13 +206,13 @@ grid:
           step: 0.01
       logmstar:
         a:
-          min: -1.55
-          max: -1.20
+          min: -1.60
+          max: -1.30
           step: 0.02
     priors:
       logmstar:
         a:
           func: udgsizes.model.priors.gaussian
           pars:
-            mu: -1.41
+            mu: -1.45
             sigma: 0.05
