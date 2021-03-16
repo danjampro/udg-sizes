@@ -5,7 +5,8 @@ from udgsizes.model.model import Model
 from udgsizes.utils.cosmology import kpc_to_arcsec
 from udgsizes.utils import shen
 
-COLOUR_OFFSET = 0.056
+# Define the mean colour offset used to shift observed colours to rest-frame colours
+COLOUR_OFFSET = 0.056  # mag
 
 
 def apply_rec_offset(rec_phys_mean, rec_phys_offset):
