@@ -6,7 +6,7 @@ from udgsizes.core import get_config, get_logger
 from udgsizes.utils.selection import select_samples
 
 
-def load_sample(config=None, logger=None, select=False):
+def load_sample(config=None, logger=None, select=True):
     """
     """
     if config is None:

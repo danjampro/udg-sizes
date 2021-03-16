@@ -5,7 +5,7 @@ from udgsizes.model.model import Model
 from udgsizes.utils.cosmology import kpc_to_arcsec
 from udgsizes.utils import shen
 
-COLOUR_OFFSET = 0.035
+COLOUR_OFFSET = 0.056
 
 
 def apply_rec_offset(rec_phys_mean, rec_phys_offset):
