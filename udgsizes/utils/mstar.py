@@ -44,3 +44,6 @@ class SbCalculator(UdgSizesBase):
         # Apply k-correction
         uae = uae_phys + self._dimmer(redshift)
         return uae
+
+
+class EmpiricalSBCalculator

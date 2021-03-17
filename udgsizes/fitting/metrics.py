@@ -79,7 +79,7 @@ class MetricEvaluator(UdgSizesBase):
     def _log_likelihood_colour(self, df):
         """ Calculate the log-likelihood of the colours assuming a Gaussian model.
         """
-        col_model = df["colour"].values
+        col_model = df["colour_obs"].values
         pdf = stats.norm(loc=col_model.mean(), scale=col_model.std()).pdf
         col_obs = self._observations["g_r"].values
         return np.log(pdf(col_obs)).sum()

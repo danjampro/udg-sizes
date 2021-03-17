@@ -45,12 +45,11 @@ def load_metrics(model_name, **kwargs):
 class ParameterGrid(UdgSizesBase):
     """ N-dimensional nested parameter grid.
     """
-    _default_metric = "poisson_likelihood_2d"
+    _default_metric = "likelihood"
 
     def __init__(self, model_name, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.model_name = model_name
-        self._model = None
         model_class = get_model_config(model_name, config=self.config)["type"]
 
         # Setup the directory to store model samples

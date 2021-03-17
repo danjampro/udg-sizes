@@ -48,8 +48,9 @@ class SmfDwarfModel(Model):
 
         return df
 
-    def calculate_uae_phys(self, logmstar, rec, redshift):
-        return self._sb_calculator.calculate_uae_phys(logmstar, rec, redshift)
+    def calculate_uae_phys(self, logmstar, rec, redshift, colour_rest):
+        """ Override method to use empirical fit to ML ratio. """
+        return self._sb_calculator.calculate_uae_phys(logmstar, rec, redshift, colour_rest)
 
     def _log_likelihood(self, state, hyper_params):
         """ The log-likelihood for the full model.
@@ -139,13 +140,13 @@ class SmfDwarfModel(Model):
 
         rec = df["rec_obs"].values
         logmstar = df["logmstar"].values
+        colour_rest = df["colour_rest"].values
 
         # Identify dwarfs
         df["is_dwarf"] = df["logmstar"].values < 9
 
         # Identify UDGs
-        df["uae_phys"] = [self.calculate_uae_phys(
-            logmstar[_], rec=rec[_], redshift=redshift[_]) for _ in range(rec.size)]
+        df["uae_phys"] = [self.calculate_uae_phys(logmstar[_], rec=rec[_], redshift=redshift[_], colour_rest=colour_rest[_]) for _ in range(rec.size)]
         df["is_udg"] = (df["rec_phys"].values > 1.5) & (df["uae_phys"].values > 24)
 
         # Apply k-corrections
