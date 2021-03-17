@@ -2,7 +2,7 @@
 import argparse
 from udgsizes.fitting.grid import ParameterGrid
 
-KEY = "poisson_likelihood_3d"
+KEY = "log_poisson_likelihood_3d"
 KEYS_IGNORE = "kstest_2d"
 
 if __name__ == "__main__":

@@ -93,8 +93,6 @@ class MetricEvaluator(UdgSizesBase):
         values_mod = np.vstack([uae_mod, rec_mod, col_mod]).T
         model, edges = np.histogramdd(values_mod, range=range, bins=n_bins, density=True)
 
-        print(values_mod.shape, values_obs.shape)
-
         # Rescale model by number of observations
         model = model.astype("float") * self._observations.shape[0]
 
