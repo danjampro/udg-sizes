@@ -13,7 +13,7 @@ class MetricEvaluator(UdgSizesBase):
     """ A class to calculate statistical metrics to compare model samples to observations. """
 
     _metric_names = ('kstest_2d', 'log_poisson_likelihood_2d', 'udg_power_law', "n_udg",
-                     "n_selected", "n_total")
+                     "n_selected", "n_total", 'log_poisson_likelihood_3d')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -33,6 +33,7 @@ class MetricEvaluator(UdgSizesBase):
             result[metric_name] = getattr(self, _metric_name)(df)
 
         result["poisson_likelihood_2d"] = np.exp(result["log_poisson_likelihood_2d"] + 1000)
+        result["poisson_likelihood_3d"] = np.exp(result["log_poisson_likelihood_3d"] + 1000)
 
         return result
 
@@ -61,6 +62,36 @@ class MetricEvaluator(UdgSizesBase):
         uae_mod = df["uae_obs_jig"].values[cond]
         rec_mod = df["rec_obs_jig"].values[cond]
         model, _, _ = np.histogram2d(uae_mod, rec_mod, range=range, bins=n_bins, density=True)
+
+        # Rescale model by number of observations
+        model = model.astype("float") * self._observations.shape[0]
+
+        # Calculate Poisson probability for each bin
+        obs = obs.reshape(-1).astype("float")
+        model = model.reshape(-1)
+        probs = stats.poisson(mu=model).pmf(obs)
+
+        # Return overall log likelihood
+        return np.log(probs).sum()
+
+    def _log_poisson_likelihood_3d(self, df, n_bins=10):
+        """ Same as 2D version but includes colour.
+        """
+        cond = df["selected_jig"].values == 1
+        range = parameter_ranges['uae'], parameter_ranges['rec'], (-0.1, 0.9)
+
+        uae_obs = self._observations["mueff_av"].values
+        rec_obs = self._observations["rec_arcsec"].values
+        col_obs = self._observations["g_r"].values
+
+        values_obs = np.vstack([uae_obs, rec_obs, col_obs]).T
+        obs, edges = np.histogramdd(values_obs, range=range, bins=n_bins)
+
+        uae_mod = df["uae_obs_jig"].values[cond]
+        rec_mod = df["rec_obs_jig"].values[cond]
+        col_mod = df["colour"].values[cond]
+        values_mod = np.vstack([uae_mod, rec_mod, col_mod]).T
+        model, edges = np.histogramdd(values_mod, range=range, bins=n_bins, density=True)
 
         # Rescale model by number of observations
         model = model.astype("float") * self._observations.shape[0]

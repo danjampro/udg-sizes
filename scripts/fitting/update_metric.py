@@ -2,7 +2,8 @@
 import argparse
 from udgsizes.fitting.grid import ParameterGrid
 
-KEY = "kstest_2d"
+KEY = "poisson_likelihood_3d"
+KEYS_IGNORE = "kstest_2d"
 
 if __name__ == "__main__":
 
@@ -17,7 +18,7 @@ if __name__ == "__main__":
     grid = ParameterGrid(model_name)
     values = []
     for i in range(grid.n_permutations):
-        values.append(grid.evaluate_one(index=i, thinning=thinning)[KEY])
+        values.append(grid.evaluate_one(index=i, thinning=thinning, keys_ignore=KEYS_IGNORE)[KEY])
 
     df = grid.load_metrics()
     df[KEY] = values
