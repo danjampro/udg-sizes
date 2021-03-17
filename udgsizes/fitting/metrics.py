@@ -89,9 +89,11 @@ class MetricEvaluator(UdgSizesBase):
 
         uae_mod = df["uae_obs_jig"].values[cond]
         rec_mod = df["rec_obs_jig"].values[cond]
-        col_mod = df["colour"].values[cond]
+        col_mod = df["colour_obs"].values[cond]
         values_mod = np.vstack([uae_mod, rec_mod, col_mod]).T
         model, edges = np.histogramdd(values_mod, range=range, bins=n_bins, density=True)
+
+        print(values_mod.shape, values_obs.shape)
 
         # Rescale model by number of observations
         model = model.astype("float") * self._observations.shape[0]
