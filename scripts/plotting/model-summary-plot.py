@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 from udgsizes.fitting.grid import ParameterGrid
 from udgsizes.obs.sample import load_sample
 
-MODEL_NAME = "blue_sedgwick_shen_final"
-SAVEFIG = True
+MODEL_NAME = "blue_sedgwick_shen_high_ml_final"
+SAVEFIG = False
 FIGHEIGHT = 2
 FONTSIZE = 14
 BINS = 10

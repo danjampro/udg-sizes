@@ -45,7 +45,7 @@ def load_metrics(model_name, **kwargs):
 class ParameterGrid(UdgSizesBase):
     """ N-dimensional nested parameter grid.
     """
-    _default_metric = "poisson_likelihood_3d"
+    _default_metric = "poisson_likelihood_2d"
 
     def __init__(self, model_name, *args, **kwargs):
         super().__init__(*args, **kwargs)

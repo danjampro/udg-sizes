@@ -144,7 +144,7 @@ models:
 
   blue_sedgwick_shen_high_ml:
     base: blue_sedgwick_shen
-    mlratio: 2
+    mlratio: 1.4
 
   blue_sedgwick_shen_udg:
     base: blue_sedgwick_shen
