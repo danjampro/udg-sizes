@@ -18,7 +18,8 @@ if __name__ == "__main__":
     grid = ParameterGrid(model_name)
     values = []
     for i in range(grid.n_permutations):
-        values.append(grid.evaluate_one(index=i, thinning=thinning, keys_ignore=KEYS_IGNORE)[KEY])
+        values.append(grid.evaluate_one(index=i, thinning=thinning,
+                                        metrics_ignore=KEYS_IGNORE)[KEY])
 
     df = grid.load_metrics()
     df[KEY] = values
