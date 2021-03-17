@@ -81,35 +81,30 @@ def plot_2d_hist(x, y, z, ax=None, xrange=None, yrange=None, show=True):
     return ax
 
 
-def likelihood_threshold_plot(df, xkey, ykey, metric="poisson_likelihood_2d", ax=None,
-                              legend=True, xrange=None, yrange=None, fontsize=15, show=True,
-                              **kwargs):
+def threshold_plot(x, y, z, ax=None, legend=True, xrange=None, yrange=None, fontsize=15, show=True,
+                   xlabel=None, ylabel=None, **kwargs):
     """
     """
     if ax is None:
         fig, ax = plt.subplots(**kwargs)
 
-    x = df[xkey].values
-    y = df[ykey].values
-    z = df[metric].values
     extent = (x.min(), x.max(), y.min(), y.max())  # l r b t
 
     nx = np.unique(x).size
     ny = np.unique(y).size
 
     zz = z.reshape(nx, ny).T
-    zzexp = np.exp(zz+1000)
 
     # Identify the thresholds and make thresholded image
-    levels = (confidence_threshold(zzexp, 0.999999426696856),
-              confidence_threshold(zzexp, 0.999936657516334),
-              confidence_threshold(zzexp, 0.997),
-              confidence_threshold(zzexp, 0.95),
-              confidence_threshold(zzexp, 0.68))
+    levels = (confidence_threshold(zz, 0.999999426696856),
+              confidence_threshold(zz, 0.999936657516334),
+              confidence_threshold(zz, 0.997),
+              confidence_threshold(zz, 0.95),
+              confidence_threshold(zz, 0.68))
     labels = r">$5\sigma$", r"$5\sigma$", r"$4\sigma$", r"$3\sigma$", r"$2\sigma$",  r"$1\sigma$"
     tmap = np.zeros_like(zz)
     for level in levels:
-        tmap[zzexp >= level] += 1
+        tmap[zz >= level] += 1
 
     # Display the thresholded image
     ax.imshow(tmap, origin="lower", cmap="binary", extent=extent, aspect="auto")
@@ -131,68 +126,13 @@ def likelihood_threshold_plot(df, xkey, ykey, metric="poisson_likelihood_2d", ax
         ax.set_ylim(*yrange)
     if (xrange is not None) and (yrange is not None):
         ax.set_aspect((xrange[1]-xrange[0])/(yrange[1]-yrange[0]))
-    ax.set_xlabel(xkey, fontsize=fontsize)
-    ax.set_ylabel(ykey, fontsize=fontsize)
+    ax.set_xlabel(xlabel, fontsize=fontsize)
+    ax.set_ylabel(ylabel, fontsize=fontsize)
 
     if legend:
         ax.legend(loc="lower left", frameon=False, fontsize=fontsize-4)
     if show:
         plt.show(block=False)
-    return ax
-
-
-def contour_plot(df, xkey, ykey, metric="poisson_likelihood_2d", ax=None, xrange=None,
-                 yrange=None, fontsize=15, show=True, smooth=True, color="k", label_contours=True,
-                 label=None, **kwargs):
-    """
-    """
-    if ax is None:
-        fig, ax = plt.subplots(**kwargs)
-
-    x = df[xkey].values
-    y = df[ykey].values
-    z = df[metric].values
-    extent = (y.min(), y.max(), x.min(), x.max())
-
-    nx = np.unique(x).size
-    ny = np.unique(y).size
-
-    zz = z.reshape(nx, ny)
-    zzexp = np.exp(zz+1000)
-
-    # Identify the thresholds and make thresholded image
-    levels = (confidence_threshold(zzexp, 0.999999426696856),
-              confidence_threshold(zzexp, 0.997),
-              confidence_threshold(zzexp, 0.68))
-    labels = r"$5\sigma$", r"$3\sigma$", r"$1\sigma$"
-
-    if smooth:
-        zzexp = gaussian_filter(zzexp, 0.5)
-
-    cs = ax.contour(zzexp, linewidths=0.8, colors=color, extent=extent, levels=levels)
-    fmt = {}
-    for l, s in zip(cs.levels, labels):
-        fmt[l] = s
-    if label_contours:
-        ax.clabel(cs, cs.levels, inline=True, fmt=fmt, fontsize=10)
-
-    # Label axis
-    if label is not None:
-        cs.collections[0].set_label(label)
-
-    # Format axes
-    if xrange is not None:
-        ax.set_xlim(*xrange)
-    if yrange is not None:
-        ax.set_ylim(*yrange)
-    if (xrange is not None) and (yrange is not None):
-        ax.set_aspect((xrange[1]-xrange[0])/(yrange[1]-yrange[0]))
-    ax.set_xlabel(ykey, fontsize=fontsize)
-    ax.set_ylabel(xkey, fontsize=fontsize)
-
-    if show:
-        plt.show(block=False)
-
     return ax
 
 

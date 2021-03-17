@@ -4,6 +4,7 @@ import pandas as pd
 
 from udgsizes.core import get_config, get_logger
 from udgsizes.utils.selection import select_samples
+from udgsizes.utils.cosmology import arcsec_to_kpc
 
 
 def load_sample(config=None, logger=None, select=True):
@@ -54,11 +55,13 @@ def load_gama_specobj(config=None, logger=None):
     return df
 
 
-def load_gama_masses(config, logmstar_min=6, logmstar_max=13, z_max=0.1, gi_max=None,
-                     ur_max=None, gr_max=None, lambdar=True, n_max=None):
+def load_gama_masses(config=None, logmstar_min=6, logmstar_max=13, z_max=0.1, gi_max=None,
+                     ur_max=None, gr_max=None, lambdar=True, n_max=2.5):
     """
     http://www.gama-survey.org/dr3/schema/dmu.php?id=9
     """
+    if config is None:
+        config = get_config()
 
     # Load catalogue from file
     lstr = "_lambdar" if lambdar else ""
@@ -84,6 +87,11 @@ def load_gama_masses(config, logmstar_min=6, logmstar_max=13, z_max=0.1, gi_max=
     df["logmstar_absmag_r"] = df["logmstar"] / df["absmag_r"]
 
     df["n"] = dfg["GALINDEX_r"]
+
+    q = 1 - dfg["GALELLIP_r"].values
+    re = dfg["GALRE_r"].values
+    rec = np.sqrt(q) * re
+    df["rec_phys"] = arcsec_to_kpc(rec, redshift=df["redshift"].values, cosmo=config["cosmology"])
 
     df["kcorr_g"] = dfg["KCORR_G"]
     df["kcorr_r"] = dfg["KCORR_R"]

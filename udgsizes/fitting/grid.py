@@ -17,7 +17,7 @@ from udgsizes.model.utils import create_model, get_model_config
 from udgsizes.fitting.metrics import MetricEvaluator
 from udgsizes.utils.selection import select_samples
 from udgsizes.utils.stats.confidence import confidence_threshold
-from udgsizes.fitting.utils.plotting import fit_summary_plot, plot_2d_hist
+from udgsizes.fitting.utils.plotting import fit_summary_plot, plot_2d_hist, threshold_plot
 
 
 def _get_datadir(model_name, config=None):
@@ -45,7 +45,7 @@ def load_metrics(model_name, **kwargs):
 class ParameterGrid(UdgSizesBase):
     """ N-dimensional nested parameter grid.
     """
-    _default_metric = "kstest_2d"
+    _default_metric = "poisson_likelihood_2d"
 
     def __init__(self, model_name, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -145,10 +145,10 @@ class ParameterGrid(UdgSizesBase):
         df = self.load_sample(index, select=True)
         return fit_summary_plot(df=df, config=self.config, logger=self.logger, **kwargs)
 
-    def load_best_sample(self, metric=None, **kwargs):
+    def load_best_sample(self, metric=None, apply_prior=True, **kwargs):
         """
         """
-        index_best = self._get_best_index(metric=metric)
+        index_best = self._get_best_index(metric=metric, apply_prior=apply_prior)
         return self.load_sample(index=index_best, **kwargs)
 
     def load_sample(self, index, select=True):
@@ -250,6 +250,24 @@ class ParameterGrid(UdgSizesBase):
 
         return result
 
+    def parameter_stats(self, key, metric=None, apply_prior=True):
+        """ Return mean and std for a given parameter """
+
+        if metric is None:
+            metric = self._default_metric
+
+        df = self.load_metrics()
+
+        weights = df[metric].values
+        if apply_prior:
+            weights *= df["prior"].values
+
+        values = df[key].values
+        mean = np.average(values, weights=weights)
+        std = np.sqrt(np.average((values-mean)**2, weights=weights))
+
+        return mean, std
+
     # Plotting
 
     def plot_2d_hist(self, xkey, ykey, metric=None, plot_indices=False, apply_prior=False,
@@ -301,9 +319,7 @@ class ParameterGrid(UdgSizesBase):
         df = self.load_metrics()
         x = df[key].values
         z = df[metric].values
-
-        if apply_prior:
-            z *= df["prior"].values
+        zprior = z * df["prior"].values
 
         cond = np.isfinite(z)
         x = x[cond]
@@ -312,12 +328,32 @@ class ParameterGrid(UdgSizesBase):
         # Plot marginal histogram
         if ax is None:
             fig, ax = plt.subplots()
-        ax.hist(x, weights=z, **kwargs)
+        ax.hist(x, weights=z, histtype="step", density=True, **kwargs)
+        ax.hist(x, weights=zprior, histtype="step", density=True, **kwargs)
 
         if show:
             plt.show(block=False)
 
         return ax
+
+    def threshold_plot(self, xkey, ykey, metric=None, plot_indices=False, apply_prior=True,
+                       **kwargs):
+        """
+        """
+        if metric is None:
+            metric = self._default_metric
+        df = self.load_metrics()
+
+        metrics = df[metric].values
+        if apply_prior:
+            metrics *= df["prior"].values
+
+        ax = threshold_plot(df[xkey].values, df[ykey].values, metrics, xlabel=xkey, ylabel=ykey,
+                            **kwargs)
+
+        return ax
+
+    # Private methods
 
     def _setup_datadir(self, overwrite):
         """
@@ -358,13 +394,16 @@ class ParameterGrid(UdgSizesBase):
                 result.append(param_dict[qname][parname])
         return result
 
-    def _get_best_index(self, metric=None, df=None, func=np.nanargmax):
+    def _get_best_index(self, metric=None, df=None, func=np.nanargmax, apply_prior=True):
         """
         """
         if metric is None:
             metric = self._default_metric
         if df is None:
             df = self.load_metrics()
+        values = df[metric].values
+        if apply_prior:
+            values *= df["prior"].values
         return func(df[metric].values)
 
     def _sample(self, index, n_samples, burnin):

@@ -1,6 +1,7 @@
 
 directories:
   data: ${UDGSIZES_HOME}/data
+  images: ${UDGSIZES_HOME}/data/images
 
 cosmology:
   class: astropy.cosmology.FlatLambdaCDM
