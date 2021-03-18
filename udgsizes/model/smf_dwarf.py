@@ -4,6 +4,7 @@ import numpy as np
 from udgsizes.model.model import Model
 from udgsizes.utils.cosmology import kpc_to_arcsec
 from udgsizes.utils import shen
+from udgsizes.utils.mstar import EmpiricalSBCalculator
 
 # Define the mean colour offset used to shift observed colours to rest-frame colours
 COLOUR_OFFSET = 0.056  # mag
@@ -22,6 +23,9 @@ class SmfDwarfModel(Model):
     def __init__(self, ignore_recov=False, *args, **kwargs):
         self._ignore_recov = ignore_recov
         super().__init__(*args, **kwargs)
+
+        self._sb_calculator = EmpiricalSBCalculator(self._pop_name, config=self.config,
+                                                    logger=self.logger)
 
     def sample(self, n_samples, hyper_params, filename=None, **kwargs):
         """ Sample the model, returning a pd.DataFrame containing the posterior distribution.
@@ -50,19 +54,20 @@ class SmfDwarfModel(Model):
 
     def calculate_uae_phys(self, logmstar, rec, redshift, colour_rest):
         """ Override method to use empirical fit to ML ratio. """
-        return self._sb_calculator.calculate_uae_phys(logmstar, rec, redshift, colour_rest)
+        return self._sb_calculator.calculate_uae_phys(logmstar=logmstar, rec=rec, redshift=redshift,
+                                                      colour_rest=colour_rest)
 
     def _log_likelihood(self, state, hyper_params):
         """ The log-likelihood for the full model.
         """
-        rec_phys_offset, logmstar, redshift, index, colour = state
+        rec_phys_offset, logmstar, redshift, index, colour_rest = state
 
         rec_phys_mean = self._mean_rec_phys(logmstar, **hyper_params['rec_phys_offset'])
         rec_phys = apply_rec_offset(rec_phys_mean, rec_phys_offset)
 
         ll = (self._log_likelihood_rec_phys_offset(rec_phys_offset, logmstar=logmstar)
               + self._log_likelihood_logmstar(logmstar, **hyper_params['logmstar'])
-              + self._log_likelihood_index_colour(logmstar, colour, index, redshift)
+              + self._log_likelihood_index_colour(logmstar, colour_rest, index, redshift)
               + self._log_likelihood_redshift(redshift))
 
         if not np.isfinite(ll):
@@ -70,7 +75,7 @@ class SmfDwarfModel(Model):
 
         if not self._ignore_recov:
             with np.errstate(divide='ignore'):  # Silence warnings
-                ll += self._log_likelihood_recovery(rec_phys, logmstar, redshift)
+                ll += self._log_likelihood_recovery(logmstar, rec_phys, redshift, colour_rest)
 
         if not np.isfinite(ll):
             return -np.inf
@@ -86,12 +91,13 @@ class SmfDwarfModel(Model):
         """ Calculate the contribution to the likelihood from the stellar mass. """
         return np.log(self._likelihood_funcs["logmstar"](logmstar, *args, **kwargs))
 
-    def _log_likelihood_recovery(self, rec_phys, logmstar, redshift):
+    def _log_likelihood_recovery(self, logmstar, rec_phys, redshift, colour_rest):
         """ Calculate the contribution to the likelihood from the recovery efficiency.
         """
         # Calculate projected quantities
         rec_obs = kpc_to_arcsec(rec_phys, redshift=redshift, cosmo=self.cosmo)
-        uae_obs = self._sb_calculator.calculate_uae(logmstar, rec_obs, redshift)
+        uae_obs = self._sb_calculator.calculate_uae(
+            logmstar=logmstar, rec=rec_obs, redshift=redshift, colour_rest=colour_rest)
 
         # Return recovery fraction
         return np.log(self._recovery_efficiency(uae_obs, rec_obs))
