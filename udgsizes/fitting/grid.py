@@ -18,6 +18,7 @@ from udgsizes.fitting.metrics import MetricEvaluator
 from udgsizes.utils.selection import select_samples
 from udgsizes.utils.stats.confidence import confidence_threshold
 from udgsizes.fitting.utils.plotting import fit_summary_plot, plot_2d_hist, threshold_plot
+from udgsizes.utils.stats.likelihood import unlog_likelihood
 
 
 def _get_datadir(model_name, config=None):
@@ -163,6 +164,11 @@ class ParameterGrid(UdgSizesBase):
         """
         """
         df = load_metrics(self.model_name, config=self.config)
+
+        for col in df.columns:
+            if col.startswith("log_likelihood"):
+                new_col = col[4:]
+                df[new_col] = unlog_likelihood(df[col].values)
 
         prior = np.ones(df.shape[0])
 

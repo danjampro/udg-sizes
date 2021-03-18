@@ -1,9 +1,10 @@
 import os
+from contextlib import suppress
 import numpy as np
 import pandas as pd
 
 from udgsizes.core import get_config, get_logger
-from udgsizes.utils.selection import select_samples
+from udgsizes.utils.selection import select_samples, GR_MAX
 from udgsizes.utils.cosmology import arcsec_to_kpc
 
 
@@ -19,8 +20,9 @@ def load_sample(config=None, logger=None, select=True):
 
     if select:
         cond = select_samples(uae=df['mueff_av'].values, rec=df['rec_arcsec'].values)
-        cond &= df["is_red"].values == 0
-        df = df[cond].reset_index(drop=True)
+        cond &= df["g_r"] < GR_MAX
+        # cond &= df["is_red"].values == 0
+        # df = df[cond].reset_index(drop=True)
 
     logger.debug(f"Loaded {df.shape[0]} LSBGs from file.")
     return df
@@ -86,16 +88,18 @@ def load_gama_masses(config=None, logmstar_min=6, logmstar_max=13, z_max=0.1, gi
     df["redshift"] = dfg["Z"]
     df["logmstar_absmag_r"] = df["logmstar"] / df["absmag_r"]
 
-    df["n"] = dfg["GALINDEX_r"]
+    with suppress(KeyError):
+        df["n"] = dfg["GALINDEX_r"]
 
-    q = 1 - dfg["GALELLIP_r"].values
-    re = dfg["GALRE_r"].values
-    rec = np.sqrt(q) * re
-    df["rec_phys"] = arcsec_to_kpc(rec, redshift=df["redshift"].values, cosmo=config["cosmology"])
+        q = 1 - dfg["GALELLIP_r"].values
+        re = dfg["GALRE_r"].values
+        rec = np.sqrt(q) * re
+        df["rec_phys"] = arcsec_to_kpc(rec, redshift=df["redshift"].values,
+                                       cosmo=config["cosmology"])
 
-    df["kcorr_g"] = dfg["KCORR_G"]
-    df["kcorr_r"] = dfg["KCORR_R"]
-    df["kcorr_i"] = dfg["KCORR_I"]
+        df["kcorr_g"] = dfg["KCORR_G"]
+        df["kcorr_r"] = dfg["KCORR_R"]
+        df["kcorr_i"] = dfg["KCORR_I"]
 
     # Apply selections
     logmstar = df["logmstar"].values
@@ -108,7 +112,8 @@ def load_gama_masses(config=None, logmstar_min=6, logmstar_max=13, z_max=0.1, gi
     if gr_max is not None:
         cond &= (df["gr"].values < gr_max)
     if n_max is not None:
-        cond &= (df["n"].values < n_max)
+        with suppress(KeyError):
+            cond &= (df["n"].values < n_max)
     df = df[cond].reset_index(drop=True)
 
     return df

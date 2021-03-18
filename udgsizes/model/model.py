@@ -8,14 +8,16 @@ from scipy.interpolate import interp1d
 
 from udgsizes.base import UdgSizesBase
 from udgsizes.utils.library import load_module
-from udgsizes.utils.cosmology import kpc_to_arcsec
-from udgsizes.utils.dimming import SBDimming, Reddening
+from udgsizes.model.kcorrector import EmpiricalKCorrector
 from udgsizes.obs.recovery import load_recovery_efficiency
 from udgsizes.model.samplers.mcmc import Sampler
 from udgsizes.model.jiggle import Jiggler
 from udgsizes.obs.index_colour import load_classifier
-from udgsizes.utils.mstar import SbCalculator
+from udgsizes.utils.mstar import EmpiricalSBCalculator
 from udgsizes.model.utils import get_model_config
+
+# Define the mean colour offset used to shift observed colours to rest-frame colours
+COLOUR_OFFSET = 0.056  # mag
 
 
 # Define this here so the model is pickleable
@@ -36,6 +38,7 @@ class Model(UdgSizesBase):
         self.model_name = model_name
 
         self.model_config = get_model_config(model_name, config=self.config)
+        self._pop_name = self.model_config["pop_name"]
 
         # Add model functions
         self._par_configs = {}
@@ -68,13 +71,9 @@ class Model(UdgSizesBase):
         self._colour_classifier = load_classifier(config=self.config)
         self._colour_index_likelihood = self._colour_classifier.vars["blue"].pdf
 
-        # Create a SB dimmer object
-        self._pop_name = self.model_config["pop_name"]
-        self._dimming = SBDimming(self._pop_name, config=self.config, logger=self.logger)
-        self._redenning = Reddening(self._pop_name, config=self.config, logger=self.logger)
-
-        self._sb_calculator = SbCalculator(population_name=self._pop_name, cosmo=self.cosmo,
-                                           mlratio=self.model_config["mlratio"])
+        self._kcorrector = EmpiricalKCorrector(config=self.config, logger=self.logger)
+        self._sb_calculator = EmpiricalSBCalculator(self._pop_name, config=self.config,
+                                                    logger=self.logger)
 
         # Prepare the sampler
         self._sampler = Sampler(par_names=self._par_order, config=self.config, logger=self.logger)
@@ -86,14 +85,36 @@ class Model(UdgSizesBase):
         if use_interpolated_redshift:
             self._use_interpolated_redshift()
 
+    # Properties
+
     @property
     def n_parameters(self):
         return len(self._par_order)
+
+    # Public methods
 
     def sample(self, n_samples, hyper_params, filename=None, **kwargs):
         """ Sample the model, returning a pd.DataFrame containing the posterior distribution.
         """
         raise NotImplementedError
+
+    def get_uae_phys(self, logmstar, rec, redshift, colour_rest):
+        """ Override method to use empirical fit to ML ratio.
+        """
+        return self._sb_calculator.calculate_uae_phys(logmstar=logmstar, rec=rec, redshift=redshift,
+                                                      colour_rest=colour_rest)
+
+    def get_kcorr_r(self, colour_rest, redshift):
+        """
+        """
+        return self._kcorrector.calculate_kr(colour_rest, redshift=redshift)
+
+    def get_kcorr_gr(self, colour_rest, redshift):
+        """
+        """
+        return self._kcorrector.calculate_kgr(colour_rest, redshift=redshift)
+
+    # Model likelihood
 
     def _log_likelihood(self, state, rec_params, uae_params):
         """ The log-likelihood for the full model.
@@ -109,25 +130,19 @@ class Model(UdgSizesBase):
             return -np.inf
         return np.log(self._likelihood_funcs["redshift"](redshift))
 
-    def _log_likelihood_rec_phys(self, rec_phys, *args, **kwargs):
-        """ Calculate the contribution to the likelihood from the physical size.
-        """
-        if rec_phys <= 0:
-            return -np.inf
-        return np.log(self._likelihood_funcs["rec_phys"](rec_phys, *args, **kwargs))
-
     def _log_likelihood_recovery(self, *args, **kwargs):
         """ Calculate the contribution to the likelihood from the recovery efficiency.
         """
         raise NotImplementedError
 
-    def _log_likelihood_index_colour(self, logmstar, index, colour_rest, redshift):
+    def _log_likelihood_index_colour(self, colour_rest, index, redshift):
         """
         """
-        colour_proj = colour_rest + self._redenning(redshift)
-        if colour_proj > 1:
-            return -np.inf
-        if colour_proj < 0:
+        kgr = self.get_kcorr_gr(colour_rest, redshift=redshift)
+        colour_proj = colour_rest + kgr
+
+        # Apply late-type galaxy selection criteria
+        if index >= 2.5:
             return -np.inf
 
         # TODO: Streamline
@@ -138,7 +153,11 @@ class Model(UdgSizesBase):
         if not self._colour_classifier.predict(_index, colours=_colour_proj, which="blue")[0]:
             return -np.inf
 
-        return np.log(self._colour_index_likelihood([index, colour_rest]))
+        # TODO: Offset rest colour
+
+        return np.log(self._colour_index_likelihood([index, colour_rest + COLOUR_OFFSET]))
+
+    # Private methods
 
     def _get_par_config(self, par_name, par_type):
         """ Convenience function to get parameter config.
@@ -211,23 +230,21 @@ class Model(UdgSizesBase):
 
     def _use_interpolated_redshift(self, n_samples=500):
         """ Interpolate the redshift function to make sampling faster.
+        Args:
+            n_samples (int): The number of redshift samples to use for interpolation.
         """
         self.logger.debug("Using interpolated redshift function.")
+
         zmin = self._get_par_config("redshift", "min")
         zmax = self._get_par_config("redshift", "max")
+
         zz = np.linspace(zmin, zmax, n_samples)
         yy = self._likelihood_funcs["redshift"](zz)
+
         interp = interp1d(zz, yy)
 
         self._likelihood_funcs["redshift"] = partial(_redshift_func, interp=interp)
 
-    def _project_sample(self, df):
-        """ Project physical units to observable quantities """
-        redshift = df['redshift'].values
-        self.logger.debug("Projecting sample to observable quantities.")
-        # Save time
-        if "rec_obs" not in df.columns:
-            df['rec_obs'] = kpc_to_arcsec(df['rec_phys'], redshift=redshift, cosmo=self.cosmo)
-        df['uae_obs'] = df['uae_phys'] + self._dimming(redshift=redshift)
-        df['colour_obs'] = df['colour_rest'] + self._redenning(redshift=redshift)
-        return df
+    def _project_sample(self, *args, **kwargs):
+        """ Project physical units to observable quantities. """
+        raise NotImplementedError

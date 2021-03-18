@@ -4,10 +4,8 @@ import numpy as np
 from udgsizes.model.model import Model
 from udgsizes.utils.cosmology import kpc_to_arcsec
 from udgsizes.utils import shen
-from udgsizes.utils.mstar import EmpiricalSBCalculator
-
-# Define the mean colour offset used to shift observed colours to rest-frame colours
-COLOUR_OFFSET = 0.056  # mag
+from udgsizes.utils.selection import GR_MAX
+from udgsizes.model.colour import EmpiricalColourModel
 
 
 def apply_rec_offset(rec_phys_mean, rec_phys_offset):
@@ -24,8 +22,7 @@ class SmfDwarfModel(Model):
         self._ignore_recov = ignore_recov
         super().__init__(*args, **kwargs)
 
-        self._sb_calculator = EmpiricalSBCalculator(self._pop_name, config=self.config,
-                                                    logger=self.logger)
+        self._colour_model = EmpiricalColourModel(config=self.config, logger=self.logger)
 
     def sample(self, n_samples, hyper_params, filename=None, **kwargs):
         """ Sample the model, returning a pd.DataFrame containing the posterior distribution.
@@ -52,22 +49,22 @@ class SmfDwarfModel(Model):
 
         return df
 
-    def calculate_uae_phys(self, logmstar, rec, redshift, colour_rest):
-        """ Override method to use empirical fit to ML ratio. """
-        return self._sb_calculator.calculate_uae_phys(logmstar=logmstar, rec=rec, redshift=redshift,
-                                                      colour_rest=colour_rest)
+    # Model likelihood
 
     def _log_likelihood(self, state, hyper_params):
         """ The log-likelihood for the full model.
         """
-        rec_phys_offset, logmstar, redshift, index, colour_rest = state
+        rec_phys_offset, logmstar, redshift, index, colour_rest_offset = state
 
         rec_phys_mean = self._mean_rec_phys(logmstar, **hyper_params['rec_phys_offset'])
         rec_phys = apply_rec_offset(rec_phys_mean, rec_phys_offset)
 
+        colour_rest_mean = self._colour_model.get_mean_colour_rest(logmstar)
+        colour_rest = colour_rest_mean + colour_rest_offset
+
         ll = (self._log_likelihood_rec_phys_offset(rec_phys_offset, logmstar=logmstar)
               + self._log_likelihood_logmstar(logmstar, **hyper_params['logmstar'])
-              + self._log_likelihood_index_colour(logmstar, colour_rest, index, redshift)
+              + self._log_likelihood_colour_rest_offset(colour_rest_offset)
               + self._log_likelihood_redshift(redshift))
 
         if not np.isfinite(ll):
@@ -91,41 +88,27 @@ class SmfDwarfModel(Model):
         """ Calculate the contribution to the likelihood from the stellar mass. """
         return np.log(self._likelihood_funcs["logmstar"](logmstar, *args, **kwargs))
 
+    def _log_likelihood_colour_rest_offset(self, colour_rest_offset):
+        """
+        """
+        return np.log(self._colour_model.offset_pdf(colour_rest_offset))
+
     def _log_likelihood_recovery(self, logmstar, rec_phys, redshift, colour_rest):
         """ Calculate the contribution to the likelihood from the recovery efficiency.
         """
-        # Calculate projected quantities
-        rec_obs = kpc_to_arcsec(rec_phys, redshift=redshift, cosmo=self.cosmo)
-        uae_obs = self._sb_calculator.calculate_uae(
-            logmstar=logmstar, rec=rec_obs, redshift=redshift, colour_rest=colour_rest)
+        # Apply colour selection function
+        colour_obs = colour_rest + self.get_kcorr_gr(colour_rest, redshift)
+        if colour_obs > GR_MAX:
+            return -np.inf
 
-        # Return recovery fraction
+        rec_obs = kpc_to_arcsec(rec_phys, redshift=redshift, cosmo=self.cosmo)
+
+        uae_phys = self.get_uae_phys(logmstar, rec_obs, redshift, colour_rest)
+        uae_obs = uae_phys + self.get_kcorr_r(colour_rest, redshift=redshift)
+
         return np.log(self._recovery_efficiency(uae_obs, rec_obs))
 
-    def _log_likelihood_index_colour(self, logmstar, colour_rest, index, redshift):
-        """
-        """
-        colour_proj = colour_rest + self._redenning(redshift)
-
-        # Apply late-type galaxy selection criteria
-        if index >= 2.5:
-            return -np.inf
-
-        # TODO: Streamline
-        _index = np.array([index])
-        _colour_proj = np.array([colour_proj])
-
-        # Return zero-likelihood if the sample does not satisfy selection criteria
-        if not self._colour_classifier.predict(_index, colours=_colour_proj, which="blue")[0]:
-            return -np.inf
-
-        # TODO: Offset rest colour
-
-        return np.log(self._colour_index_likelihood([index, colour_rest + COLOUR_OFFSET]))
-
-    def _get_par_config(self, par_name, par_type):
-        """ Convenience function to get parameter config. """
-        return self._par_configs[par_name][par_type]
+    # Private methods
 
     def _project_sample(self, df, alpha):
         """ Project physical units to observable quantities.
@@ -152,12 +135,17 @@ class SmfDwarfModel(Model):
         df["is_dwarf"] = df["logmstar"].values < 9
 
         # Identify UDGs
-        df["uae_phys"] = [self.calculate_uae_phys(logmstar[_], rec=rec[_], redshift=redshift[_], colour_rest=colour_rest[_]) for _ in range(rec.size)]
+        df["uae_phys"] = [self.get_uae_phys(
+            logmstar[_], rec=rec[_], redshift=redshift[_], colour_rest=colour_rest[_]
+            ) for _ in range(rec.size)]
         df["is_udg"] = (df["rec_phys"].values > 1.5) & (df["uae_phys"].values > 24)
 
-        # Apply k-corrections
-        df['uae_obs'] = df['uae_phys'] + self._dimming(redshift=redshift)
-        df['colour_obs'] = df['colour_rest'] + self._redenning(redshift=redshift)
+        # Apply the k-corrections
+        kr = [self.get_kcorr_r(a, b) for (a, b) in zip(colour_rest, redshift)]
+        df['uae_obs'] = df['uae_phys'] + np.array(kr)
+
+        kgr = [self.get_kcorr_gr(a, b) for (a, b) in zip(colour_rest, redshift)]
+        df['colour_obs'] = df['colour_rest'] + np.array(kgr)
 
         return df
 

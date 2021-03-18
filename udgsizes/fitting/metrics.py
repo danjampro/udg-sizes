@@ -32,10 +32,8 @@ class MetricEvaluator(UdgSizesBase):
             _metric_name = "_" + metric_name
             result[metric_name] = getattr(self, _metric_name)(df)
 
-        result["likelihood_poisson"] = self._unlog_ll(result["log_likelihood_poisson"])
-
-        ll = result["log_likelihood_poisson"] + result["log_likelihood_colour"]
-        result["likelihood"] = self._unlog_ll(ll)
+        result["log_likelihood"] = result["log_likelihood_poisson"] + \
+            result["log_likelihood_colour"]
 
         return result
 
@@ -102,9 +100,3 @@ class MetricEvaluator(UdgSizesBase):
         rec_phys = df["rec_phys"].values[df["is_udg"].values == 1]
         fit_result = powerlaw.Fit(rec_phys, xmin=rec_phys_min)
         return fit_result.power_law.alpha
-
-    def _unlog_ll(self, log_values):
-        """
-        """
-        log_values = log_values - np.log(np.exp(log_values).sum())
-        return np.exp(log_values - np.nanmax(log_values))

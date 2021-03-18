@@ -1,3 +1,5 @@
+GR_MAX = 0.42
+
 parameter_ranges = {'uae': [24, 27],    # These are fixed
                     'rec': [3, 10]}
 
