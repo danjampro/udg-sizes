@@ -16,6 +16,8 @@ from udgsizes.obs.index_colour import load_classifier
 from udgsizes.utils.mstar import EmpiricalSBCalculator
 from udgsizes.model.utils import get_model_config
 
+PARS_SKIP = ("index", "colour_rest", "colour_rest_offset")
+
 # Define the mean colour offset used to shift observed colours to rest-frame colours
 COLOUR_OFFSET = 0.056  # mag
 
@@ -47,7 +49,7 @@ class Model(UdgSizesBase):
 
             self._par_configs[par_name] = par_config
 
-            if par_name in ("index", "colour_rest"):  # Likelihood functions not configurable yet
+            if par_name in PARS_SKIP:  # Likelihood functions not configurable yet
                 continue
 
             module_name = f"udgsizes.model.components.{par_config['func']}"

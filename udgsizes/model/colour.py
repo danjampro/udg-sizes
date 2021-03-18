@@ -31,6 +31,7 @@ class EmpiricalColourModel(ColourModel):
 
         self._means, edges, _ = binned_statistic(logmstar, colour, bins=bins)
         self._stds, edges, _ = binned_statistic(logmstar, colour, bins=bins, statistic="std")
+        self.sigma = self._stds.mean()
 
         self._centres = 0.5 * (edges[1:] + edges[:-1])
 
@@ -38,14 +39,10 @@ class EmpiricalColourModel(ColourModel):
 
         self.offset_pdf = norm(loc=0, scale=self.sigma).pdf
 
-    @property
-    def sigma(self):
-        return self._stds.mean()
-
-    def get_mean_colour_rest(self, logmass, logmass_min=5):
+    def get_mean_colour_rest(self, logmstar, logmstar_min=4):
         """ """
-        logmass = max(logmass, logmass_min)
-        return self._interp(logmass)
+        logmstar = max(logmstar, logmstar_min)
+        return self._interp(logmstar)
 
     def summary_plot(self):
         """

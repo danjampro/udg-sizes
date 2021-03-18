@@ -28,10 +28,12 @@ class EmpiricalKCorrector(KCorrector):
         self._redshift_max = 1
         self._colour_obs_min = -0.5
         self._colour_obs_max = 1.5
-        self._n_samples = 1000
+        self._n_samples = 100
 
-        colour_obs = np.linspace(self._colour_obs_min, self._colour_obs_max, self._n_samples)
-        redshift = np.linspace(self._redshift_min, self._redshift_max, self._n_samples)
+        colour_obs = np.linspace(self._colour_obs_min, self._colour_obs_max, self._n_samples,
+                                 dtype="float32")
+        redshift = np.linspace(self._redshift_min, self._redshift_max, self._n_samples,
+                               dtype="float32")
         points_obs = np.vstack([colour_obs, redshift]).T
 
         # Calculate k-corrections from grid of observable quantities
@@ -50,13 +52,13 @@ class EmpiricalKCorrector(KCorrector):
     def calculate_kr(self, colour_rest, redshift):
         """
         """
-        return self._kr_interp([colour_rest, redshift])
+        return self._kr_interp([colour_rest, redshift])[0]
 
     def calculate_kgr(self, colour_rest, redshift):
         """
         """
         point = [colour_rest, redshift]
-        return self._kg_interp(point) - self._kr_interp(point)
+        return self._kg_interp(point)[0] - self._kr_interp(point)[0]
 
     # Private methods
 

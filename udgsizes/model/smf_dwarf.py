@@ -16,7 +16,7 @@ def apply_rec_offset(rec_phys_mean, rec_phys_offset):
 
 class SmfDwarfModel(Model):
 
-    _par_order = "rec_phys_offset", "logmstar", "redshift", "index", "colour_rest"
+    _par_order = "rec_phys_offset", "logmstar", "redshift", "colour_rest_offset"
 
     def __init__(self, ignore_recov=False, *args, **kwargs):
         self._ignore_recov = ignore_recov
@@ -39,6 +39,7 @@ class SmfDwarfModel(Model):
 
         # Jiggle results
         if self._jiggler is not None:
+            self.logger.debug("Jiggling samples...")
             df['uae_obs_jig'], df['rec_obs_jig'], df["selected_jig"] = self._jiggler.jiggle(
                 uae=df['uae_obs'].values, rec=df['rec_obs'].values)
 
@@ -54,7 +55,7 @@ class SmfDwarfModel(Model):
     def _log_likelihood(self, state, hyper_params):
         """ The log-likelihood for the full model.
         """
-        rec_phys_offset, logmstar, redshift, index, colour_rest_offset = state
+        rec_phys_offset, logmstar, redshift, colour_rest_offset = state
 
         rec_phys_mean = self._mean_rec_phys(logmstar, **hyper_params['rec_phys_offset'])
         rec_phys = apply_rec_offset(rec_phys_mean, rec_phys_offset)
@@ -103,7 +104,7 @@ class SmfDwarfModel(Model):
 
         rec_obs = kpc_to_arcsec(rec_phys, redshift=redshift, cosmo=self.cosmo)
 
-        uae_phys = self.get_uae_phys(logmstar, rec_obs, redshift, colour_rest)
+        uae_phys = self.get_uae_phys(logmstar, rec_obs, redshift=redshift, colour_rest=colour_rest)
         uae_obs = uae_phys + self.get_kcorr_r(colour_rest, redshift=redshift)
 
         return np.log(self._recovery_efficiency(uae_obs, rec_obs))
@@ -119,28 +120,34 @@ class SmfDwarfModel(Model):
             pd.DataFrame: The catalouge with projected quantities.
         """
         redshift = df["redshift"].values
+        logmstar = df["logmstar"].values
 
+        colour_rest = np.array([self._colour_model.get_mean_colour_rest(_) for _ in logmstar])
+        df["colour_rest"] = colour_rest
+
+        self.logger.debug("Projecting structural parameters...")
         rec_phys_mean = np.array([
             self._mean_rec_phys(lm, alpha=alpha) for lm in df["logmstar"].values])
         rec_phys_offset = df["rec_phys_offset"].values
 
-        df["rec_phys"] = apply_rec_offset(rec_phys_mean, rec_phys_offset)
-        df["rec_obs"] = kpc_to_arcsec(df['rec_phys'], redshift=redshift, cosmo=self.cosmo)
+        rec_phys = apply_rec_offset(rec_phys_mean, rec_phys_offset)
+        df["rec_phys"] = rec_phys
 
-        rec = df["rec_obs"].values
-        logmstar = df["logmstar"].values
-        colour_rest = df["colour_rest"].values
+        rec_obs = kpc_to_arcsec(df['rec_phys'], redshift=redshift, cosmo=self.cosmo)
+        df["rec_obs"] = rec_obs
 
-        # Identify dwarfs
-        df["is_dwarf"] = df["logmstar"].values < 9
+        uae_phys = np.array([self.get_uae_phys(
+            logmstar[_], rec=rec_obs[_], redshift=redshift[_], colour_rest=colour_rest[_]
+            ) for _ in range(df.shape[0])])
+        df["uae_phys"] = uae_phys
 
-        # Identify UDGs
-        df["uae_phys"] = [self.get_uae_phys(
-            logmstar[_], rec=rec[_], redshift=redshift[_], colour_rest=colour_rest[_]
-            ) for _ in range(rec.size)]
-        df["is_udg"] = (df["rec_phys"].values > 1.5) & (df["uae_phys"].values > 24)
+        # Identify dwarfs and UDGs
+        df["is_dwarf"] = logmstar < 9
+        df["is_udg"] = (rec_phys > 1.5) & (uae_phys > 24)
 
         # Apply the k-corrections
+        self.logger.debug("Applying k-corrections...")
+
         kr = [self.get_kcorr_r(a, b) for (a, b) in zip(colour_rest, redshift)]
         df['uae_obs'] = df['uae_phys'] + np.array(kr)
 
