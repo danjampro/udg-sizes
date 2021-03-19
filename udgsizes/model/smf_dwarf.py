@@ -122,7 +122,8 @@ class SmfDwarfModel(Model):
         redshift = df["redshift"].values
         logmstar = df["logmstar"].values
 
-        colour_rest = np.array([self._colour_model.get_mean_colour_rest(_) for _ in logmstar])
+        colour_rest_av = np.array([self._colour_model.get_mean_colour_rest(_) for _ in logmstar])
+        colour_rest = colour_rest_av + df["colour_rest_offset"].values
         df["colour_rest"] = colour_rest
 
         self.logger.debug("Projecting structural parameters...")
