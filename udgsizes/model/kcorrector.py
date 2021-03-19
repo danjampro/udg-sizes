@@ -28,7 +28,7 @@ class EmpiricalKCorrector(KCorrector):
         self._redshift_max = 1
         self._colour_obs_min = -0.5
         self._colour_obs_max = 1.5
-        self._n_samples = 100
+        self._n_samples = 10000
 
         colour_obs = np.linspace(self._colour_obs_min, self._colour_obs_max, self._n_samples,
                                  dtype="float32")
@@ -65,9 +65,9 @@ class EmpiricalKCorrector(KCorrector):
     def _calculate_kr(self, points_obs):
         """
         """
-        return np.array([kcorrect.k_gr_g(gr, redshift=z) for z, gr in points_obs])
+        return np.array([kcorrect.k_gr_r(gr, redshift=z) for z, gr in points_obs])
 
     def _calculate_kg(self, points_obs):
         """
         """
-        return np.array([kcorrect.k_gr_r(gr, redshift=z) for z, gr in points_obs])
+        return np.array([kcorrect.k_gr_g(gr, redshift=z) for z, gr in points_obs])
