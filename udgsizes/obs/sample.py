@@ -22,7 +22,7 @@ def load_sample(config=None, logger=None, select=True):
         cond = select_samples(uae=df['mueff_av'].values, rec=df['rec_arcsec'].values)
         cond &= df["g_r"] < GR_MAX
         # cond &= df["is_red"].values == 0
-        # df = df[cond].reset_index(drop=True)
+        df = df[cond].reset_index(drop=True)
 
     logger.debug(f"Loaded {df.shape[0]} LSBGs from file.")
     return df
