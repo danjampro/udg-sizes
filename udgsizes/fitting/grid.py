@@ -207,7 +207,7 @@ class ParameterGrid(UdgSizesBase):
         cond = self.identify_confident(as_bool_array=True, **kwargs)
         return (self.load_sample(i) for i in range(self.n_permutations) if cond[i])
 
-    def get_best_metrics(self, metric="kstest_2d", **kwargs):
+    def get_best_metrics(self, metric=None, **kwargs):
         """
         """
         df = self.load_metrics()
@@ -409,7 +409,7 @@ class ParameterGrid(UdgSizesBase):
         values = df[metric].values
         if apply_prior:
             values *= df["prior"].values
-        return func(df[metric].values)
+        return func(values)
 
     def _sample(self, index, n_samples, burnin):
         """
