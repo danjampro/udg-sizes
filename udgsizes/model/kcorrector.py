@@ -19,6 +19,20 @@ class KCorrector(UdgSizesBase):
         raise NotImplementedError
 
 
+class DummyKcorrector(KCorrector):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def calculate_kr(self, *args, **kwargs):
+        """ Return the r-band k-correction in magnitudes. """
+        return 0
+
+    def calculate_kgr(self, *args, **kwargs):
+        """ Return the (g-r) colour k-correction in magnitudes. """
+        return 0
+
+
 class EmpiricalKCorrector(KCorrector):
 
     def __init__(self, **kwargs):

@@ -3,14 +3,27 @@ from scipy.interpolate import interp1d
 from scipy.stats import binned_statistic, norm
 import matplotlib.pyplot as plt
 
+from astropy.stats import sigma_clipped_stats
+
 from udgsizes.base import UdgSizesBase
 from udgsizes.obs.sample import load_gama_masses
+
+COLOUR_MEAS_ERROR = 0.06  # Fiducial colour measurement error from GAMA
+COLOUR_MIN = 0.35  # Minimum average rest frame colour based on known late type dwarfs
 
 
 class ColourModel(UdgSizesBase):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+
+def clipped_median(data):
+    return sigma_clipped_stats(data)[1]
+
+
+def clipped_std(data):
+    return sigma_clipped_stats(data)[2]
 
 
 class EmpiricalColourModel(ColourModel):
@@ -29,9 +42,11 @@ class EmpiricalColourModel(ColourModel):
         logmstar = logmstar[cond]
         colour = colour[cond]
 
-        self._means, edges, _ = binned_statistic(logmstar, colour, bins=bins)
-        self._stds, edges, _ = binned_statistic(logmstar, colour, bins=bins, statistic="std")
-        self.sigma = self._stds.mean()
+        self._means, edges, _ = binned_statistic(logmstar, colour, bins=bins, statistic=clipped_median)
+        self._stds, edges, _ = binned_statistic(logmstar, colour, bins=bins, statistic=clipped_std)
+
+        # Calculate intrinsic dispersion given total and measurement error
+        self.sigma = np.sqrt(self._stds.mean() ** 2 - COLOUR_MEAS_ERROR ** 2)
 
         self._centres = 0.5 * (edges[1:] + edges[:-1])
 
@@ -39,10 +54,10 @@ class EmpiricalColourModel(ColourModel):
 
         self.offset_pdf = norm(loc=0, scale=self.sigma).pdf
 
-    def get_mean_colour_rest(self, logmstar, logmstar_min=4):
+    def get_mean_colour_rest(self, logmstar):
         """ """
-        logmstar = max(logmstar, logmstar_min)
-        return self._interp(logmstar)
+        colour = self._interp(logmstar)
+        return max(colour, COLOUR_MIN)
 
     def summary_plot(self):
         """
