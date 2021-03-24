@@ -48,7 +48,7 @@ class MetricEvaluator(UdgSizesBase):
         y2 = self._observations['rec_arcsec'].values
         return kstest_2d(x1, y1, x2, y2)
 
-    def _log_likelihood_poisson(self, df, n_bins=5):
+    def _log_likelihood_poisson(self, df, n_bins=10):
         """ Bin the model samples in 2D and renormalise to match the number of observations. This
         fixes the rate paramter of the Poisson distribution in each bin. The likelihood is
         evaluated by calculating the Poisson probability of the observed counts in each bin.
