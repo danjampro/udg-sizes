@@ -23,7 +23,7 @@ FONTSIZE = 14
 
 MODEL_NAME = "blue_sedgwick_shen_final"
 
-SAVEFIG = True
+SAVEFIG = False
 
 
 def calculate_rec(logmstar, alpha):

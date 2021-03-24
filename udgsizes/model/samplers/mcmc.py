@@ -7,7 +7,7 @@ from udgsizes.base import UdgSizesBase
 
 class Sampler(UdgSizesBase):
 
-    def __init__(self, par_names=None, n_walkers=100, *args, **kwargs):
+    def __init__(self, par_names=None, n_walkers=200, *args, **kwargs):
         self.par_names = par_names
         self.n_walkers = int(n_walkers)
         super().__init__(*args, **kwargs)
