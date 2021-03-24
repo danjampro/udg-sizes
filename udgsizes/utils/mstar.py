@@ -99,7 +99,7 @@ class EmpiricalSBCalculator(UdgSizesBase):
         absmag = logmstar / np.polyval(self._ml_polys[idx], colour_rest)
 
         # Calculate apparent magnitude
-        mag = absmag + self._cosmo.distmod(redshift).value
+        mag = absmag + self.distmod(redshift)
 
         # Calculate apparent surface brightness
         return sersic.mag2meanSB(mag, re=rec, q=1)

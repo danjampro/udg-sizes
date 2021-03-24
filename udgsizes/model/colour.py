@@ -1,11 +1,14 @@
+from functools import partial
+
 import numpy as np
 from scipy.interpolate import interp1d
-from scipy.stats import binned_statistic, norm
+from scipy.stats import binned_statistic
 import matplotlib.pyplot as plt
 
 from astropy.stats import sigma_clipped_stats
 
 from udgsizes.base import UdgSizesBase
+from udgsizes.utils.stats.likelihood import unnormalised_gaussian_pdf
 from udgsizes.obs.sample import load_gama_masses, load_leisman_udgs
 
 COLOUR_MEAS_ERROR = 0.06  # Fiducial colour measurement error from GAMA
@@ -67,7 +70,7 @@ class EmpiricalColourModel(ColourModel):
 
         self._interp = interp1d(self._centres, self._means, fill_value="extrapolate")
 
-        self.offset_pdf = norm(loc=0, scale=self.sigma).pdf
+        self.offset_pdf = partial(unnormalised_gaussian_pdf, sigma=self.sigma)
 
     def get_mean_colour_rest(self, logmstar):
         """ """

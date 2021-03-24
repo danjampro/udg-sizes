@@ -1,7 +1,5 @@
-"""
-"""
-from scipy import stats
 from udgsizes.utils import shen
+from udgsizes.utils.stats.likelihood import unnormalised_gaussian_pdf
 
 
 def power(rec_phys, alpha, min=0):
@@ -22,4 +20,4 @@ def gaussian_offset_shen(offset, logmstar):
     mstar = 10 ** logmstar
     norm = 1 + (mstar / shen.M0) ** 2
     sigma = shen.SIGMA_2 + (shen.SIGMA_1 - shen.SIGMA_2) / norm
-    return stats.norm(loc=0, scale=sigma).pdf(offset)
+    return unnormalised_gaussian_pdf(offset, sigma)

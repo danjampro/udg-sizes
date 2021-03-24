@@ -2,23 +2,24 @@ import os
 import cProfile
 
 from udgsizes.core import get_config
-from udgsizes.model.empirical import Model
+from udgsizes.model.utils import create_model
+
 
 if __name__ == "__main__":
 
-    alpha = 3.5
-    k = 1
-    n_samples = 2000
-    burnin = 500
+    n_samples = 400
+    burnin = 100
+    model_name = "blue_sedgwick_shen"
 
     config = get_config()
     filename = os.path.join(config['directories']['data'], 'profile_sampling.prof')
 
-    model = Model("blue")
-    params = {"rec_phys": [alpha], "uae_phys": [k]}
+    model = create_model(model_name)
+
+    hyper_params = {"rec_phys_offset": {"alpha": 0.4}, "logmstar": {"a": -1.45}}
 
     def func():  # Not sure if this is necessary
-        model.sample(n_samples=n_samples, hyper_params=params, burnin=burnin)
+        model.sample(n_samples=n_samples, hyper_params=hyper_params, burnin=burnin)
 
     cProfile.run("func()", filename=filename)
 

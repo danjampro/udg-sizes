@@ -107,7 +107,7 @@ class SmfDwarfModel(Model):
         if colour_obs > GR_MAX:
             return -np.inf
 
-        rec_obs = kpc_to_arcsec(rec_phys, redshift=redshift, cosmo=self.cosmo)
+        rec_obs = self.kpc_to_arcsec(rec_phys, redshift=redshift)
 
         uae_phys = self.get_uae_phys(logmstar, rec_obs, redshift=redshift, colour_rest=colour_rest)
         uae_obs = uae_phys + self.get_kcorr_r(colour_rest, redshift=redshift)
