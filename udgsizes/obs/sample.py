@@ -2,6 +2,9 @@ import os
 from contextlib import suppress
 import numpy as np
 import pandas as pd
+from astropy import constants
+
+from deepscan import sersic
 
 from udgsizes.core import get_config, get_logger
 from udgsizes.utils.selection import select_samples, GR_MAX
@@ -75,18 +78,22 @@ def load_gama_masses(config=None, logmstar_min=6, logmstar_max=13, z_max=0.1, gi
 
     # Translate columns
     df = pd.DataFrame()
+    df["redshift"] = dfg["Z"]
+    df["logmoverl_i"] = dfg["logmoverl_i"]
 
     # log10 M*,total = logmstar + log10(fluxscale) - 2 log10(h/0.7)
     df["logmstar"] = dfg["logmstar"] + np.log10(fluxscale) - 2 * np.log10(h / 0.7)
 
     # M_X,total = absmag_X - 2.5 log10(fluxscale) + 5 log10(h/0.7)
     df["absmag_r"] = dfg["absmag_r"] - 2.5 * np.log10(fluxscale) + 5 * np.log10(h / 0.7)
+    df["absmag_i"] = dfg["absmag_i"] - 2.5 * np.log10(fluxscale) + 5 * np.log10(h / 0.7)
 
     df["gi"] = dfg["gminusi"].values
     df["ur"] = dfg["uminusr"].values
-    df["gr"] = dfg["gminusi"] + dfg["absmag_i"] - dfg["absmag_r"]
-    df["redshift"] = dfg["Z"]
+    df["gr"] = dfg["gminusi"] + df["absmag_i"] - df["absmag_r"]
+
     df["logmstar_absmag_r"] = df["logmstar"] / df["absmag_r"]
+    df["logmstar_absmag_i"] = df["logmstar"] / df["absmag_i"]
 
     with suppress(KeyError):
         df["n"] = dfg["GALINDEX_r"]
@@ -94,6 +101,10 @@ def load_gama_masses(config=None, logmstar_min=6, logmstar_max=13, z_max=0.1, gi
         q = 1 - dfg["GALELLIP_r"].values
         re = dfg["GALRE_r"].values
         rec = np.sqrt(q) * re
+
+        df["mag_obs"] = dfg["GALMAG_r"].values
+        df["rec_obs"] = rec
+        df["uae_obs"] = sersic.mag2meanSB(mag=df["mag_obs"], re=rec, q=1)
         df["rec_phys"] = arcsec_to_kpc(rec, redshift=df["redshift"].values,
                                        cosmo=config["cosmology"])
 
@@ -115,5 +126,41 @@ def load_gama_masses(config=None, logmstar_min=6, logmstar_max=13, z_max=0.1, gi
         with suppress(KeyError):
             cond &= (df["n"].values < n_max)
     df = df[cond].reset_index(drop=True)
+
+    return df
+
+
+def load_leisman_udgs(config=None, **kwargs):
+    """
+    """
+    from udgsizes.utils.mstar import EmpiricalSBCalculator
+
+    if config is None:
+        config = get_config()
+
+    cosmo = config["cosmology"]
+
+    filename = os.path.join(config['directories']['data'], 'input', 'leisman_17.csv')
+    df = pd.read_csv(filename)
+
+    df["redshift"] = df["cz"] / constants.c.to_value("km / s")
+    distmod = cosmo.distmod(df["redshift"]).to_value("mag")
+
+    df["absmag_g"] = df["gMAG"]
+    df["absmag_r"] = df["absmag_g"] - df["g-r"]
+    df["mag_g"] = df["absmag_g"] + distmod
+    df["mag_r"] = df["mag_g"] - df["g-r"]
+    df["gr"] = df["g-r"]
+
+    # Estimate ML from colour
+    sb = EmpiricalSBCalculator(config=config, **kwargs)
+    logmstar_temp = sb._logmstar.min() * np.ones(df.shape[0])   # Lowest stellar mass bin
+    logml = np.array(
+        [sb.calculate_logml_ab(a, colour_rest=b) for a, b in zip(logmstar_temp, df["gr"].values)])
+    df["logml_ab"] = logml
+
+    # Use ML estiamte to calculate logmstar
+    logmstar = logml - 0.4 * df["absmag_r"]  # Check this!
+    df["logmstar"] = logmstar
 
     return df

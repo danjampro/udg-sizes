@@ -49,10 +49,10 @@ class SbCalculator(UdgSizesBase):
         return uae
 
 
-class EmpiricalSBCalculator(SbCalculator):
+class EmpiricalSBCalculator(UdgSizesBase):
 
-    def __init__(self, population_name, **kwargs):
-        super().__init__(population_name=population_name, mlratio=None, **kwargs)
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
         selection_config = self.config["colour_model"]["selection"]
         df = load_gama_masses(config=self.config, **selection_config)
@@ -103,6 +103,15 @@ class EmpiricalSBCalculator(SbCalculator):
 
         # Calculate apparent surface brightness
         return sersic.mag2meanSB(mag, re=rec, q=1)
+
+    def calculate_logml_ab(self, logmstar, colour_rest):
+        """ Luminosity in units of AB mag=0 as in Taylor+11.
+        """
+        # Calculate absolute mag in r-band
+        idx = self._get_bin_index(logmstar, bins=self._logmstar_bins)
+
+        absmag = logmstar / np.polyval(self._ml_polys[idx], colour_rest)
+        return 0.4 * (absmag) + logmstar
 
     # Plotting
 

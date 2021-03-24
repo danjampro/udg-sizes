@@ -1,6 +1,7 @@
 from functools import partial
 
 import numpy as np
+from scipy.stats import kstest
 from scipy.ndimage.filters import gaussian_filter
 
 import matplotlib as mpl
@@ -20,27 +21,38 @@ def fit_summary_plot(df, dfo=None, show=True, bins=15, select=True, **kwargs):
     if select:
         df = df[df["selected_jig"] == 1].reset_index(drop=True)
 
-    fig = plt.figure(figsize=(8, 4))
+    fig = plt.figure(figsize=(6, 6))
 
-    ax0 = plt.subplot(2, 1, 1)
+    ax0 = plt.subplot(3, 1, 1)
     histkwargs = dict(density=True, histtype="step")
     rng = (min(dfo['mueff_av'].min(), df['uae_obs_jig'].min()),
            max(dfo['mueff_av'].max(), df['uae_obs_jig'].max()))
     ax0.hist(dfo['mueff_av'].values, color="k", range=rng, bins=bins, label="obs", **histkwargs)
     ax0.hist(df['uae_obs_jig'].values, color="b", range=rng, bins=bins, label="model",
              **histkwargs)
+    ks = kstest(dfo['mueff_av'].values, df['uae_obs_jig'].values)[1]
     ax0.legend(loc="best")
-    ax0.set_xlabel("uae")
+    ax0.set_xlabel(f"uae (KS pval={ks:.2f})")
 
-    ax1 = plt.subplot(2, 1, 2)
+    ax1 = plt.subplot(3, 1, 2)
     rng = (min(dfo['rec_arcsec'].min(), df['rec_obs_jig'].min()),
            max(dfo['rec_arcsec'].max(), df['rec_obs_jig'].max()))
     ax1.hist(dfo['rec_arcsec'].values, color="k", range=rng, bins=bins, **histkwargs,
              label="obs")
     ax1.hist(df['rec_obs_jig'].values, color="b", range=rng, bins=bins, **histkwargs,
              label="model")
+    ks = kstest(dfo['rec_arcsec'].values, df['rec_obs_jig'].values)[1]
     ax1.legend(loc="best")
-    ax1.set_xlabel("rec")
+    ax1.set_xlabel(f"rec (KS pval={ks:.2f})")
+
+    ax1 = plt.subplot(3, 1, 3)
+    rng = (min(dfo['g_r'].min(), df['colour_obs'].min()),
+           max(dfo['g_r'].max(), df['colour_obs'].max()))
+    ax1.hist(dfo['g_r'].values, color="k", range=rng, bins=bins, **histkwargs, label="obs")
+    ax1.hist(df['colour_obs'].values, color="b", range=rng, bins=bins, **histkwargs, label="model")
+    ks = kstest(dfo['g_r'].values, df['colour_obs'].values)[1]
+    ax1.legend(loc="best")
+    ax1.set_xlabel(f"g-r (KS pval={ks:.2f})")
 
     plt.tight_layout()
     if show:
@@ -49,7 +61,7 @@ def fit_summary_plot(df, dfo=None, show=True, bins=15, select=True, **kwargs):
     return fig
 
 
-def plot_2d_hist(x, y, z, ax=None, xrange=None, yrange=None, show=True):
+def plot_2d_hist(x, y, z, ax=None, xrange=None, yrange=None, show=True, smooth=None):
     """
     """
     if ax is None:
@@ -64,6 +76,9 @@ def plot_2d_hist(x, y, z, ax=None, xrange=None, yrange=None, show=True):
     nx = np.unique(x).size
     ny = np.unique(y).size
     zz = z.reshape(nx, ny).T
+
+    if smooth:
+        zz = gaussian_filter(zz, smooth)
 
     # Display the thresholded image
     ax.imshow(zz, origin="lower", cmap="binary", extent=extent, aspect="auto")

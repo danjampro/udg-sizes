@@ -74,8 +74,7 @@ class Model(UdgSizesBase):
         self._colour_index_likelihood = self._colour_classifier.vars["blue"].pdf
 
         self._kcorrector = EmpiricalKCorrector(config=self.config, logger=self.logger)
-        self._sb_calculator = EmpiricalSBCalculator(self._pop_name, config=self.config,
-                                                    logger=self.logger)
+        self._sb_calculator = EmpiricalSBCalculator(config=self.config, logger=self.logger)
 
         # Prepare the sampler
         self._sampler = Sampler(par_names=self._par_order, config=self.config, logger=self.logger)

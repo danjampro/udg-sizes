@@ -7,6 +7,7 @@ from udgsizes.base import UdgSizesBase
 from udgsizes.obs.sample import load_sample
 from udgsizes.utils.stats.kstest import kstest_2d
 from udgsizes.utils.selection import parameter_ranges
+from udgsizes.utils.stats.likelihood import fit_colour_gaussian
 
 
 class MetricEvaluator(UdgSizesBase):
@@ -77,10 +78,8 @@ class MetricEvaluator(UdgSizesBase):
     def _log_likelihood_colour(self, df):
         """ Calculate the log-likelihood of the colours assuming a Gaussian model.
         """
-        col_model = df["colour_obs"].values
-        pdf = stats.norm(loc=col_model.mean(), scale=col_model.std()).pdf
-        col_obs = self._observations["g_r"].values
-        return np.log(pdf(col_obs)).sum()
+        pdf = fit_colour_gaussian(df["colour_obs"].values)
+        return np.log(pdf(self._observations["g_r"].values)).sum()
 
     def _n_dwarf(self, df):
         return df["is_dwarf"].sum()

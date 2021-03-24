@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from astropy.stats import sigma_clipped_stats
 
 from udgsizes.base import UdgSizesBase
-from udgsizes.obs.sample import load_gama_masses
+from udgsizes.obs.sample import load_gama_masses, load_leisman_udgs
 
 COLOUR_MEAS_ERROR = 0.06  # Fiducial colour measurement error from GAMA
 COLOUR_MIN = 0.35  # Minimum average rest frame colour based on known late type dwarfs
@@ -28,22 +28,37 @@ def clipped_std(data):
 
 class EmpiricalColourModel(ColourModel):
 
-    def __init__(self, bins=10, logmstar_min=8, logmstar_max=11, lambdar=False, **kwargs):
+    def __init__(self, bins=9, logmstar_min=6.5, logmstar_max=11, lambdar=False, use_leisman=False,
+                 **kwargs):
         super().__init__(**kwargs)
 
         self._lambdar = lambdar
 
-        df = load_gama_masses(lambdar=self._lambdar)
+        dfg = load_gama_masses(lambdar=self._lambdar)
+        colour = dfg["gr"].values
+        logmstar = dfg["logmstar"].values
 
-        colour = df["gr"].values
-        logmstar = df["logmstar"].values
+        cond_leisman = np.zeros_like(colour, dtype="bool")
+
+        dfl = load_leisman_udgs()
+        colour = np.hstack([colour, dfl["gr"].values])
+        logmstar = np.hstack([logmstar, dfl["logmstar"].values])
+        cond_leisman = np.hstack([cond_leisman, np.ones(dfl.shape[0], dtype="bool")])
 
         cond = (logmstar >= logmstar_min) & (logmstar < logmstar_max)
-        logmstar = logmstar[cond]
-        colour = colour[cond]
+        self._logmstar = logmstar[cond]
+        self._colour = colour[cond]
+        self._cond_leisman = cond_leisman[cond]
 
-        self._means, edges, _ = binned_statistic(logmstar, colour, bins=bins, statistic=clipped_median)
-        self._stds, edges, _ = binned_statistic(logmstar, colour, bins=bins, statistic=clipped_std)
+        cond_fit = np.ones_like(self._cond_leisman)
+        if use_leisman:
+            cond_fit[self._cond_leisman] = False
+
+        histkwargs = {"bins": bins, "range": (logmstar_min, logmstar_max)}
+        self._means, edges, _ = binned_statistic(self._logmstar[cond_fit], self._colour[cond_fit],
+                                                 statistic=clipped_median, **histkwargs)
+        self._stds, edges, _ = binned_statistic(self._logmstar[cond_fit], self._colour[cond_fit],
+                                                statistic=clipped_std, **histkwargs)
 
         # Calculate intrinsic dispersion given total and measurement error
         self.sigma = np.sqrt(self._stds.mean() ** 2 - COLOUR_MEAS_ERROR ** 2)
@@ -66,7 +81,7 @@ class EmpiricalColourModel(ColourModel):
         logmstar = df["logmstar"].values
 
         fig, ax = plt.subplots()
-        ax.hist2d(logmstar, df["gr"].values, cmap="binary", bins=50)
+        ax.hist2d(logmstar, df["gr"].values, cmap="binary", bins=70)
 
         ax.plot(self._centres, self._means, "ro")
         ax.plot(self._centres, self._means + self._stds, "r--")
@@ -76,6 +91,11 @@ class EmpiricalColourModel(ColourModel):
         ax.plot(xx, [self.get_mean_colour_rest(_) for _ in xx], "b-")
         ax.plot(xx, [self.get_mean_colour_rest(_) + self.sigma for _ in xx], "b--")
         ax.plot(xx, [self.get_mean_colour_rest(_) - self.sigma for _ in xx], "b--")
+
+        cond = (self._logmstar < 8.5) & (self._cond_leisman == 0)
+        ax.plot(self._logmstar[cond], self._colour[cond], "ko", markersize=0.5, alpha=0.2)
+        cond = (self._logmstar < 8.5) & (self._cond_leisman == 1)
+        ax.plot(self._logmstar[cond], self._colour[cond], "bo", markersize=1)
 
         ax.set_xlim(6, 12)
         ax.set_ylim(-0.1, 1)

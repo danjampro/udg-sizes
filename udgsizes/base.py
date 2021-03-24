@@ -7,3 +7,5 @@ class UdgSizesBase():
     def __init__(self, config=None, logger=None):
         self.logger = get_logger() if logger is None else logger
         self.config = get_config() if config is None else config
+
+        self._cosmo = self.config["cosmology"]
