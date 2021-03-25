@@ -9,8 +9,9 @@ from udgsizes.utils.cosmology import kpc_to_arcsec
 from udgsizes.utils import shen
 from udgsizes.utils.selection import GR_MAX, GR_MIN
 from udgsizes.model.colour import EmpiricalColourModel
-# from udgsizes.model.kcorrector import DummyKcorrector
-from udgsizes.model.kcorrector import InvEmpiricalKCorrector
+# from udgsizes.model.kcorrector import DummyKcorrector as KCorrector
+from udgsizes.model.kcorrector import InvEmpiricalKCorrector as KCorrector
+# from udgsizes.model.kcorrector import EmpiricalKCorrector as KCorrector
 
 
 def apply_rec_offset(rec_phys_mean, rec_phys_offset):
@@ -27,8 +28,7 @@ class SmfDwarfModel(Model):
         self._ignore_recov = ignore_recov
         super().__init__(*args, **kwargs)
 
-        # self._kcorrector = DummyKcorrector(config=self.config, logger=self.logger)
-        self._kcorrector = InvEmpiricalKCorrector(config=self.config, logger=self.logger)
+        self._kcorrector = KCorrector(config=self.config, logger=self.logger)
 
         self._colour_model = EmpiricalColourModel(config=self.config, logger=self.logger)
 
