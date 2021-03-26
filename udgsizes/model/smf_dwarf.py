@@ -10,8 +10,8 @@ from udgsizes.utils import shen
 from udgsizes.utils.selection import GR_MAX, GR_MIN
 from udgsizes.model.colour import EmpiricalColourModel
 # from udgsizes.model.kcorrector import DummyKcorrector as KCorrector
-from udgsizes.model.kcorrector import InvEmpiricalKCorrector as KCorrector
-# from udgsizes.model.kcorrector import EmpiricalKCorrector as KCorrector
+# from udgsizes.model.kcorrector import InvEmpiricalKCorrector as KCorrector
+from udgsizes.model.kcorrector import EmpiricalKCorrector as KCorrector
 
 
 def apply_rec_offset(rec_phys_mean, rec_phys_offset):
@@ -193,7 +193,7 @@ class SmfDwarfModel(Model):
         d = self._log_likelihood_colour_rest_offset(colour_rest_offset)
         e = self._log_likelihood_recovery(logmstar, rec_phys, redshift, colour_rest)
 
-        result = sum([np.exp(_) for _ in [a, b, c, d, e]])
+        result = np.exp(sum([a, b, c, d, e]))
         if not np.isfinite(result):
             return 0
         return result

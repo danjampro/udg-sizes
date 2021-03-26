@@ -11,8 +11,8 @@ UDG_MODEL_NAME = "blue_sedgwick_shen_udg"
 
 if __name__ == "__main__":
 
-    n_samples = 10000
-    burnin = 1000
+    n_samples = 1000
+    burnin = 300
 
     # Get best fitting hyper parameters
     hyper_params = ParameterGrid(MODEL_NAME).get_best_hyper_parameters()

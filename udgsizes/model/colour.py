@@ -12,7 +12,8 @@ from udgsizes.utils.stats.likelihood import unnormalised_gaussian_pdf
 from udgsizes.obs.sample import load_gama_masses, load_leisman_udgs
 
 COLOUR_MEAS_ERROR = 0.06  # Fiducial colour measurement error from GAMA
-COLOUR_MIN = 0.35  # Minimum average rest frame colour based on known late type dwarfs
+# COLOUR_MIN = 0.35  # Minimum average rest frame colour based on known late type dwarfs
+COLOUR_MIN = 0.4
 
 
 class ColourModel(UdgSizesBase):
