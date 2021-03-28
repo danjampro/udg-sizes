@@ -8,7 +8,7 @@ from deepscan import sersic
 
 from udgsizes.core import get_config, get_logger
 from udgsizes.utils.selection import select_samples, GR_MAX
-from udgsizes.utils.cosmology import arcsec_to_kpc
+from udgsizes.utils.cosmology import arcsec_to_kpc, kpc_to_arcsec
 
 
 def load_sample(config=None, logger=None, select=True):
@@ -151,6 +151,9 @@ def load_leisman_udgs(config=None, **kwargs):
     df["mag_g"] = df["absmag_g"] + distmod
     df["mag_r"] = df["mag_g"] - df["g-r"]
     df["gr"] = df["g-r"]
+
+    df["re_phys"] = df["rh"].values
+    df["re_obs"] = kpc_to_arcsec(df["re_phys"].values, redshift=df["redshift"].values, cosmo=cosmo)
 
     # Estimate ML from colour
     sb = EmpiricalSBCalculator(config=config, **kwargs)

@@ -14,12 +14,6 @@ from udgsizes.model.colour import EmpiricalColourModel
 from udgsizes.model.kcorrector import EmpiricalKCorrector as KCorrector
 
 
-def apply_rec_offset(rec_phys_mean, rec_phys_offset):
-    """
-    """
-    return np.exp(np.log(rec_phys_mean) + rec_phys_offset)
-
-
 class SmfDwarfModel(Model):
 
     _par_order = "rec_phys_offset", "logmstar", "redshift", "colour_rest_offset"
@@ -66,7 +60,7 @@ class SmfDwarfModel(Model):
         rec_phys_offset, logmstar, redshift, colour_rest_offset = state
 
         rec_phys_mean = self._mean_rec_phys(logmstar, **hyper_params['rec_phys_offset'])
-        rec_phys = apply_rec_offset(rec_phys_mean, rec_phys_offset)
+        rec_phys = shen.apply_rec_offset(rec_phys_mean, rec_phys_offset)
 
         colour_rest_mean = self._colour_model.get_mean_colour_rest(logmstar)
         colour_rest = colour_rest_mean + colour_rest_offset

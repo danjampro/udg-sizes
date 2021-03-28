@@ -20,10 +20,11 @@ def marginal_likelihood_plot(ax, values, weights, range=None, bins=15, fontsize=
     histkwargs = {"range": range, "bins": bins, "orientation": orientation, "density": True}
 
     ax.hist(values, weights=weights, histtype="step", color="k", **histkwargs)
-    ax.hist(values, weights=weights, alpha=0.1, color="k", **histkwargs)
+    ax.hist(values, weights=weights, alpha=0.1, color="k", label="No Prior", **histkwargs)
 
     if weights_no_prior is not None:
-        ax.hist(values, weights=weights_no_prior, histtype="step", color="dodgerblue", **histkwargs)
+        ax.hist(values, weights=weights_no_prior, histtype="step", color="dodgerblue",
+                label="Normal Prior", **histkwargs)
 
     cond = (values >= range[0]) & (values < range[1])
     values = values[cond]
@@ -66,7 +67,7 @@ if __name__ == "__main__":
     model_name = "blue_sedgwick_shen_final"
     xkey = "rec_phys_offset_alpha"
     ykey = "logmstar_a"
-    zkey = "poisson_likelihood_2d"
+    zkey = "likelihood"
     xlabel = r"$\beta$"
     ylabel = r"$\alpha$"
 
@@ -78,7 +79,8 @@ if __name__ == "__main__":
     znoprior = df[zkey].values
     z = df[zkey].values * df["prior"].values
 
-    xrange = x.min(), x.max()
+    # xrange = x.min(), x.max()
+    xrange = x.min(), 0.6
     yrange = y.min(), y.max()
 
     fig = plt.figure(figsize=(7, 7))
@@ -90,7 +92,7 @@ if __name__ == "__main__":
     # Likelihood heatmap
     # threshold_plot(x=x, y=y, z=z, ax=ax0, xrange=xrange, yrange=yrange)
     grid.plot_2d_hist(xkey, ykey, metric=zkey, apply_prior=True, xrange=xrange, yrange=yrange,
-                      ax=ax0)
+                      ax=ax0, smooth=0.8)
 
     # Marginal likelihood hists
     m1, s1 = marginal_likelihood_plot(ax1, x, z, range=xrange, weights_no_prior=znoprior)
@@ -120,6 +122,9 @@ if __name__ == "__main__":
     # Consistent axis ranges
     ax1.set_xlim(ax0.get_xlim())
     ax2.set_ylim(ax0.get_ylim())
+
+    bbox_to_anchor = (1.005, 0.9)
+    ax1.legend(fontsize=FONTSIZE-2.5, bbox_to_anchor=bbox_to_anchor)
 
     if SAVE:
         config = get_config()
