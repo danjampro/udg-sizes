@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from udgsizes.fitting.grid import ParameterGrid
 from udgsizes.obs.sample import load_sample
 
-MODEL_NAME = "blue_sedgwick_shen"
+MODEL_NAME = "blue_sedgwick_shen_final"
 SAVEFIG = False
 FIGHEIGHT = 2
 FONTSIZE = 14
