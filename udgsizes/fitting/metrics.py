@@ -104,14 +104,14 @@ class MetricEvaluator(UdgSizesBase):
     def _kstest_rec_obs_jig(self, df):
         vobs = self._observations["rec_arcsec"]
         vmod = df["rec_obs_jig"].values
-        return kstest(vobs, vmod)[1]
+        return stats.kstest(vobs, vmod)[1]
 
     def _kstest_uae_obs_jig(self, df):
         vobs = self._observations["mueff_av"]
         vmod = df["uae_obs_jig"].values
-        return kstest(vobs, vmod)[1]
+        return stats.kstest(vobs, vmod)[1]
 
     def _kstest_colour_obs(self, df):
         vobs = self._observations["gr"]
         vmod = df["colour_obs"].values
-        return kstest(vobs, vmod)[1]
+        return stats.kstest(vobs, vmod)[1]
