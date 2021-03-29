@@ -1,6 +1,5 @@
 import os
 import numpy as np
-from scipy.stats import kstest
 import matplotlib.pyplot as plt
 
 from udgsizes.fitting.grid import ParameterGrid
@@ -33,6 +32,10 @@ OBSKEYS = {"uae_obs_jig": "mueff_av",
            "rec_obs_jig": "rec_arcsec",
            "colour_obs": "g_r"}
 
+KSTEST_KEYS = {"uae_obs_jig": "kstest_2d",
+               "rec_obs_jig": "kstest_2d",
+               "colour_obs": "kstest_colour_obs"}
+
 
 def plot_best_samples(grid, ax_dict, metric="likelihood", q=0.5):
     """
@@ -47,7 +50,7 @@ def plot_best_samples(grid, ax_dict, metric="likelihood", q=0.5):
         df = df[df["selected_jig"].values == 1].reset_index(drop=True)
 
         for key in PAR_NAMES:
-            values = df[key].values
+            values = df[key].valuesg
             hist, edges = np.histogram(values, range=RANGES[key], bins=BINS_MODEL, density=True)
             centres[key] = 0.5 * (edges[1:] + edges[:-1])
 
@@ -78,7 +81,7 @@ def plot_best_sample(grid, ax_dict, linewidth=1.5, color="k"):
 def plot_observations(grid, ax_dict, color="b"):
     """
     """
-    df = grid.load_best_sample(select=True, metric=METRIC_BEST)
+    metrics = grid.get_best_metrics(metric=METRIC_BEST)
     dfo = load_sample(select=True)
 
     for key, ax in ax_dict.items():
@@ -98,8 +101,7 @@ def plot_observations(grid, ax_dict, color="b"):
             ax.errorbar(centres, hist_norm, yerr=yerr, color=color, linewidth=0, linestyle=None,
                         elinewidth=1.5, marker="o", markersize=3, zorder=10)
 
-            values_model = df[key].values
-            pval = kstest(values, values_model)[1]
+            pval = metrics[KSTEST_KEYS[key]]
             ax.text(0.22, 0.75, r"$p_{KS}=$" + rf"{pval:.2f}", transform=ax.transAxes,
                     fontsize=FONTSIZE-1, color="k")
 
