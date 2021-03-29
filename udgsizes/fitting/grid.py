@@ -155,6 +155,12 @@ class ParameterGrid(UdgSizesBase):
         """
         """
         df = pd.read_csv(self._get_sample_filename(index))
+
+        # TODO: Move to model
+        colour = df["colour_obs"].values
+        df["selected_colour"] = (colour >= GR_MIN) & (colour < GR_MAX)
+        df["selected"] = (df["selected_jig"].values * df["selected_colour"].values).astype("bool")
+        
         if select:
             cond = df["selected"].values.astype("bool")
             df = df[cond].reset_index(drop=True)
@@ -170,11 +176,6 @@ class ParameterGrid(UdgSizesBase):
             if col.startswith("log_likelihood"):
                 new_col = col[4:]
                 df[new_col] = unlog_likelihood(df[col].values)
-
-        # TODO: Move to model
-        colour = df["colour_obs"].values
-        df["selected_colour"] = (colour >= GR_MIN) & (colour < GR_MAX)
-        df["selected"] = (df["selected_jig"].values * df["selected_colour"].values).astype("bool")
 
         # Calculate prior
         prior = np.ones(df.shape[0])
