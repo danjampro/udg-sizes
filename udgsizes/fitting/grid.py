@@ -46,7 +46,7 @@ def load_metrics(model_name, **kwargs):
 class ParameterGrid(UdgSizesBase):
     """ N-dimensional nested parameter grid.
     """
-    _default_metric = "likelihood"
+    _default_metric = "likelihood"  # TODO: Change to "posterior"
 
     def __init__(self, model_name, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -156,7 +156,7 @@ class ParameterGrid(UdgSizesBase):
         """
         df = pd.read_csv(self._get_sample_filename(index))
         if select:
-            cond = select_samples(uae=df['uae_obs_jig'].values, rec=df['rec_obs_jig'].values)
+            cond = df["selected"].values.astype("bool")
             df = df[cond].reset_index(drop=True)
         return df
 
@@ -165,11 +165,18 @@ class ParameterGrid(UdgSizesBase):
         """
         df = load_metrics(self.model_name, config=self.config)
 
+        # TODO: Move to model
         for col in df.columns:
             if col.startswith("log_likelihood"):
                 new_col = col[4:]
                 df[new_col] = unlog_likelihood(df[col].values)
 
+        # TODO: Move to model
+        colour = df["colour_obs"].values
+        df["selected_colour"] = (colour >= GR_MIN) & (colour < GR_MAX)
+        df["selected"] = (df["selected_jig"].values * df["selected_colour"].values).astype("bool")
+
+        # Calculate prior
         prior = np.ones(df.shape[0])
 
         for quantity_name in self.quantity_names:

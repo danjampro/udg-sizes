@@ -26,7 +26,7 @@ RANGES = {"logmstar": (5, 10.5),
           "rec_phys": (0, 20),
           "uae_obs_jig": (24, 28),
           "rec_obs_jig": (3, 10),
-          "colour_obs": (-0.1, 0.4)}
+          "colour_obs": (0, 0.4)}
 
 OBSKEYS = {"uae_obs_jig": "mueff_av",
            "rec_obs_jig": "rec_arcsec",
@@ -88,8 +88,6 @@ def plot_best_samples(grid, ax_dict, metric="likelihood", q=0.5):
 
     for key, ax in ax_dict.items():
         ax.fill_between(centres[key], mins[key], maxs[key], color="k", alpha=0.3, linewidth=0.0)
-
-        print(maxs[key])
 
     return ax_dict
 
