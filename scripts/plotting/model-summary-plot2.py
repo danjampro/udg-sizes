@@ -50,7 +50,7 @@ def plot_best_samples(grid, ax_dict, metric="likelihood", q=0.5):
         df = df[df["selected_jig"].values == 1].reset_index(drop=True)
 
         for key in PAR_NAMES:
-            values = df[key].valuesg
+            values = df[key].values
             hist, edges = np.histogram(values, range=RANGES[key], bins=BINS_MODEL, density=True)
             centres[key] = 0.5 * (edges[1:] + edges[:-1])
 
