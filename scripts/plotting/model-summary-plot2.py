@@ -1,3 +1,4 @@
+import os
 import numpy as np
 from scipy.stats import kstest
 import matplotlib.pyplot as plt
@@ -6,13 +7,12 @@ from udgsizes.fitting.grid import ParameterGrid
 from udgsizes.obs.sample import load_sample
 from udgsizes.utils.selection import GR_MIN, GR_MAX
 
-MODEL_NAME = "blue_sedgwick_shen"
-# MODEL_NAME = "blue_sedgwick_shen_final"
+MODEL_NAME = "blue_sedgwick_shen_final"
 SAVEFIG = False
-FIGHEIGHT = 2
 FONTSIZE = 14
 BINS_OBS = 10
 BINS_MODEL = 20
+METRIC_BEST = "kstest_min"
 PAR_NAMES = "logmstar", "redshift", "rec_phys", "uae_obs_jig", "rec_obs_jig", "colour_obs"
 
 LABELS = {"logmstar": r"$\log_{10}\ \mathrm{M_{*} / M_{\odot}}$",
@@ -60,10 +60,10 @@ def plot_best_samples(grid, ax_dict, metric="likelihood", q=0.5):
     return ax_dict
 
 
-def plot_best_sample(grid, ax_dict, metric="likelihood", linewidth=1.5, color="k"):
+def plot_best_sample(grid, ax_dict, linewidth=1.5, color="k"):
     """
     """
-    df = grid.load_best_sample(select=True)
+    df = grid.load_best_sample(select=True, metric=METRIC_BEST)
     df = df[df["selected_jig"].values == 1].reset_index(drop=True)
 
     for key, ax in ax_dict.items():
@@ -78,7 +78,7 @@ def plot_best_sample(grid, ax_dict, metric="likelihood", linewidth=1.5, color="k
 def plot_observations(grid, ax_dict, color="b"):
     """
     """
-    df = grid.load_best_sample(select=True)
+    df = grid.load_best_sample(select=True, metric=METRIC_BEST)
     dfo = load_sample(select=True)
 
     for key, ax in ax_dict.items():
@@ -105,21 +105,9 @@ def plot_observations(grid, ax_dict, color="b"):
 
 
 if __name__ == "__main__":
-    # """
-    from udgsizes.core import get_config
-    config = get_config()
-    model_type = "udgsizes.model.smf_dwarf.SmfDwarfModel"
-    config["grid"][model_type]["parameters"]["rec_phys_offset"]["alpha"]["max"] = 0.7
-    config["grid"][model_type]["parameters"]["rec_phys_offset"]["alpha"]["step"] = 0.05
-    config["grid"][model_type]["parameters"]["logmstar"]["a"]["min"] = -1.50
-    config["grid"][model_type]["parameters"]["logmstar"]["a"]["max"] = -1.35
-    config["grid"][model_type]["parameters"]["logmstar"]["a"]["step"] = 0.05
-    grid = ParameterGrid(MODEL_NAME, config=config)
-    # """
 
-    # grid = ParameterGrid(MODEL_NAME)
+    grid = ParameterGrid(MODEL_NAME)
 
-    # fig = plt.figure(figsize=(FIGHEIGHT * len(PAR_NAMES), FIGHEIGHT * 1.2))
     fig = plt.figure(figsize=(5, 7.5))
 
     ax_dict = {}
@@ -143,39 +131,9 @@ if __name__ == "__main__":
     # Additional formatting
     plt.tight_layout()
 
-    plt.show(block=False)
-
-
-
-    """
-    df_list = grid.load_confident_samples(apply_prior=True)
-    df = df[df["selected_jig"].values == 1].reset_index(drop=True)
-
-    dfo = load_sample(select=True)
-
-    fig = plt.figure(figsize=(FIGHEIGHT * len(PAR_NAMES), FIGHEIGHT * 1.2))
-
-    for i, par_name in enumerate(PAR_NAMES):
-
-        ax = plt.subplot(1, len(PAR_NAMES), i+1)
-        values = df[par_name].values
-        ax.hist(values, color="k", alpha=0.4, **HISTKWARGS)
-
-        if par_name in OBSKEYS:
-            values_obs = dfo[OBSKEYS[par_name]].values
-            rng = values.min(), values.max()
-            ax.hist(values_obs, range=rng, color="b", alpha=0.4, **HISTKWARGS)
-
-        if i == 0:
-            ax.set_ylabel("PDF", fontsize=FONTSIZE)
-        ax.set_xlabel(LABELS[par_name], fontsize=FONTSIZE)
-
-        ax.axes.yaxis.set_ticklabels([])
-
-    plt.tight_layout()
     if SAVEFIG:
         filename = os.path.join(grid.config["directories"]["images"],
                                 f"model-summary-{MODEL_NAME}.png")
         plt.savefig(filename, dpi=150, bbox_inches="tight")
+
     plt.show(block=False)
-    """

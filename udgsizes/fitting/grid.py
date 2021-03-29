@@ -15,7 +15,7 @@ from udgsizes.core import get_config
 from udgsizes.utils.library import load_module
 from udgsizes.model.utils import create_model, get_model_config
 from udgsizes.fitting.metrics import MetricEvaluator
-from udgsizes.utils.selection import select_samples, GR_MIN, GR_MAX
+from udgsizes.utils.selection import GR_MIN, GR_MAX
 from udgsizes.utils.stats.confidence import confidence_threshold
 from udgsizes.fitting.utils.plotting import fit_summary_plot, plot_2d_hist, threshold_plot
 from udgsizes.utils.stats.likelihood import unlog_likelihood
@@ -160,7 +160,7 @@ class ParameterGrid(UdgSizesBase):
         colour = df["colour_obs"].values
         df["selected_colour"] = (colour >= GR_MIN) & (colour < GR_MAX)
         df["selected"] = (df["selected_jig"].values * df["selected_colour"].values).astype("bool")
-        
+
         if select:
             cond = df["selected"].values.astype("bool")
             df = df[cond].reset_index(drop=True)
@@ -171,11 +171,16 @@ class ParameterGrid(UdgSizesBase):
         """
         df = load_metrics(self.model_name, config=self.config)
 
-        # TODO: Move to model
+        # TODO: Move to metrics
         for col in df.columns:
             if col.startswith("log_likelihood"):
                 new_col = col[4:]
                 df[new_col] = unlog_likelihood(df[col].values)
+
+        # TODO: Move to metrics
+        keys = "kstest_colour_obs", "kstest_rec_obs_jig", "kstest_uae_obs_jig"
+        values = [df[k].values for k in keys]
+        df["kstest_min"] = np.min(values, axis=0)
 
         # Calculate prior
         prior = np.ones(df.shape[0])

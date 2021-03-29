@@ -14,8 +14,8 @@ class MetricEvaluator(UdgSizesBase):
     """ A class to calculate statistical metrics to compare model samples to observations. """
 
     _metric_names = ('log_likelihood_poisson', 'log_likelihood_colour', 'kstest_2d',
-                     'udg_power_law', "n_udg",  "n_selected", "n_total", "kstest_rec_obs_jig",
-                     "kstest_uae_obs_jig", "kstest_colour_obs")
+                     'udg_power_law', "n_udg",  "n_dwarf", "n_selected", "n_total",
+                     "kstest_rec_obs_jig",  "kstest_uae_obs_jig", "kstest_colour_obs")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
