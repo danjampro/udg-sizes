@@ -1,5 +1,7 @@
 import numpy as np
+from scipy.stats import kstest
 import matplotlib.pyplot as plt
+
 from udgsizes.fitting.grid import ParameterGrid
 from udgsizes.obs.sample import load_sample
 
@@ -9,14 +11,14 @@ SAVEFIG = False
 FIGHEIGHT = 2
 FONTSIZE = 14
 BINS_OBS = 10
-BINS_MODEL = 30
+BINS_MODEL = 20
 PAR_NAMES = "logmstar", "redshift", "rec_phys", "uae_obs_jig", "rec_obs_jig", "colour_obs"
 
 LABELS = {"logmstar": r"$\log_{10}\ \mathrm{M_{*} / M_{\odot}}$",
           "rec_phys": r"$\mathrm{\hat{r}_{e}\ [kpc]}$",
           "redshift": r"$z$",
-          "uae_obs_jig": r"$\mathrm{\bar{\mu}_{e}\ [mag arcsec^{-2}]}$",
-          "rec_obs_jig": r"$\mathrm{\bar{r}_{e}\ [kpc]}$",
+          "uae_obs_jig": r"$\mathrm{\bar{\mu}_{e}\ [mag\ arcsec^{-2}]}$",
+          "rec_obs_jig": r"$\mathrm{\bar{r}_{e}\ [arcsec]}$",
           "colour_obs": r"$(g-r)$"}
 
 RANGES = {"logmstar": (5, 10.5),
@@ -64,7 +66,7 @@ def plot_all_samples(grid, ax_dict, alpha_max=0.2, alpha_min=0, metric="likeliho
 """
 
 
-def plot_best_samples(grid, ax_dict, metric="likelihood", q=0.9):
+def plot_best_samples(grid, ax_dict, metric="likelihood", q=0.5):
     """
     """
     mins = {_: np.ones(BINS_MODEL) * np.inf for _ in PAR_NAMES}
@@ -107,9 +109,10 @@ def plot_best_sample(grid, ax_dict, metric="likelihood", linewidth=1.5, color="k
         ax.plot(centres, hist, "-", linewidth=linewidth, color=color)
 
 
-def plot_observations(ax_dict, color="b"):
+def plot_observations(grid, ax_dict, color="b"):
     """
     """
+    df = grid.load_best_sample(select=True)
     dfo = load_sample(select=True)
 
     for key, ax in ax_dict.items():
@@ -128,6 +131,11 @@ def plot_observations(ax_dict, color="b"):
 
             ax.errorbar(centres, hist_norm, yerr=yerr, color=color, linewidth=0, linestyle=None,
                         elinewidth=1.5, marker="o", markersize=3, zorder=10)
+
+            values_model = df[key].values
+            pval = kstest(values, values_model)[1]
+            ax.text(0.22, 0.75, r"$p_{KS}=$" + rf"{pval:.2f}", transform=ax.transAxes,
+                    fontsize=FONTSIZE-1, color="k")
 
 
 if __name__ == "__main__":
@@ -153,7 +161,7 @@ if __name__ == "__main__":
         ax_dict[key] = plt.subplot(3, 2, i+1)
 
         # Axes labels and tick formatting
-        if i == 0:
+        if i % 2 == 0:
             ax_dict[key].set_ylabel("PDF", fontsize=FONTSIZE)
             ax_dict[key].set_xlabel(LABELS[key], fontsize=FONTSIZE)
 
@@ -164,7 +172,7 @@ if __name__ == "__main__":
 
     plot_best_sample(grid, ax_dict)
 
-    plot_observations(ax_dict)
+    plot_observations(grid, ax_dict)
 
     # Additional formatting
     plt.tight_layout()
