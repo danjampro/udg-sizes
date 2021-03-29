@@ -15,7 +15,7 @@ from udgsizes.core import get_config
 from udgsizes.utils.library import load_module
 from udgsizes.model.utils import create_model, get_model_config
 from udgsizes.fitting.metrics import MetricEvaluator
-from udgsizes.utils.selection import select_samples
+from udgsizes.utils.selection import select_samples, GR_MIN, GR_MAX
 from udgsizes.utils.stats.confidence import confidence_threshold
 from udgsizes.fitting.utils.plotting import fit_summary_plot, plot_2d_hist, threshold_plot
 from udgsizes.utils.stats.likelihood import unlog_likelihood
