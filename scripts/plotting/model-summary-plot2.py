@@ -41,7 +41,7 @@ def plot_best_samples(grid, ax_dict, metric="likelihood", q=0.5):
     maxs = {_: np.ones(BINS_MODEL) * -np.inf for _ in PAR_NAMES}
     centres = {}
 
-    for df in grid.load_best_samples(q=q, metric=metric):
+    for df in grid.load_confident_samples(q=q, metric=metric):
 
         # Apply selection
         df = df[df["selected_jig"].values == 1].reset_index(drop=True)
