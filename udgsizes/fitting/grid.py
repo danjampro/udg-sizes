@@ -182,9 +182,10 @@ class ParameterGrid(UdgSizesBase):
         values = [df[k].values for k in keys]
         df["kstest_min"] = np.min(values, axis=0)
 
-        keys = "kstest_colour_obs", "kstest_2d"
-        values = [df[k].values for k in keys]
-        df["kstest_min_2d"] = np.min(values, axis=0)
+        with suppress(KeyError):
+            keys = "kstest_colour_obs", "kstest_2d"
+            values = [df[k].values for k in keys]
+            df["kstest_min_2d"] = np.min(values, axis=0)
 
         # Calculate prior
         prior = np.ones(df.shape[0])

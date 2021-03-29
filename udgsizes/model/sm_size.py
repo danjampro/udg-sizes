@@ -4,17 +4,15 @@ import numpy as np
 
 from scipy.integrate import tplquad
 
-from udgsizes.model.model import Model
+from udgsizes.model.model import ModelBase
 from udgsizes.utils.cosmology import kpc_to_arcsec
 from udgsizes.utils import shen
 from udgsizes.utils.selection import GR_MAX, GR_MIN
 from udgsizes.model.colour import EmpiricalColourModel
-# from udgsizes.model.kcorrector import DummyKcorrector as KCorrector
-# from udgsizes.model.kcorrector import InvEmpiricalKCorrector as KCorrector
 from udgsizes.model.kcorrector import EmpiricalKCorrector as KCorrector
 
 
-class SmfDwarfModel(Model):
+class Model(ModelBase):
 
     _par_order = "rec_phys_offset", "logmstar", "redshift", "colour_rest_offset"
 
@@ -135,7 +133,7 @@ class SmfDwarfModel(Model):
             self._mean_rec_phys(lm, alpha=alpha) for lm in df["logmstar"].values])
         rec_phys_offset = df["rec_phys_offset"].values
 
-        rec_phys = apply_rec_offset(rec_phys_mean, rec_phys_offset)
+        rec_phys = shen.apply_rec_offset(rec_phys_mean, rec_phys_offset)
         df["rec_phys"] = rec_phys
 
         rec_obs = kpc_to_arcsec(df['rec_phys'], redshift=redshift, cosmo=self.cosmo)

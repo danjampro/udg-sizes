@@ -54,7 +54,7 @@ class EmpiricalSBCalculator(UdgSizesBase):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        selection_config = self.config["colour_model"]["selection"]
+        selection_config = self.config["ml_model"]["selection"]
         df = load_gama_masses(config=self.config, **selection_config)
 
         self._logmstar = df["logmstar"].values
@@ -154,7 +154,7 @@ class EmpiricalSBCalculator(UdgSizesBase):
     def _get_logmstar_bins(self):
         """
         """
-        binning_config = self.config["colour_model"]["binning"]["logmstar"]
+        binning_config = self.config["ml_model"]["binning"]["logmstar"]
         bins = np.arange(binning_config["min"], binning_config["max"], binning_config["step"])
         return bins
 

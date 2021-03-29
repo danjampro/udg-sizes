@@ -27,7 +27,7 @@ def _redshift_func(z, interp):
     return interp(z)
 
 
-class Model(UdgSizesBase):
+class ModelBase(UdgSizesBase):
     """ The purpose of the EmpiricalModel class is to sample re, uae, z values. It is *not* to
     sample the fitting paramters of the individual likelihood terms (e.g. size power law).
     """

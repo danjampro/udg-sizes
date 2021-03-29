@@ -24,7 +24,7 @@ dimming:
     fsps:
       logzsol: -0.66
 
-colour_model:
+ml_model:
   selection:
     n_max: 2.5
     z_max: 0.1
@@ -70,14 +70,6 @@ models:
           max: 0.5
           step: 0.1
 
-  blue_trunc:
-    base: blue
-    variables:
-      rec_phys:
-        func: rec.power_trunc
-        pars:
-          r_trunc: 1.0
-
   blue_baldry:
     base: blue
     type: udgsizes.model.smf_size.SmfSizeModel
@@ -94,25 +86,6 @@ models:
           max: 9
           step: 0.1
 
-  blue_baldry_trunc:
-    base: blue_baldry
-    variables:
-      rec_phys:
-        func: rec.power_trunc
-        pars:
-          r_trunc: 1.0
-
-  blue_baldry_dwarf:
-    base: blue_baldry
-    variables:
-      logmstar:
-        pars:
-          logm0: 7.5
-
-  blue_baldry_highml:
-    base: blue_baldry
-    mlratio: 2
-
   blue_baldry_shen:
     base: blue_baldry
     type: udgsizes.model.smf.SmfModel
@@ -124,16 +97,9 @@ models:
           max: 2.0
           step: 0.05
 
-  blue_baldry_shen_udg:
-    base: blue_baldry_shen
-    variables:
-      logmstar:
-        pars:
-          min: 6
-
   blue_sedgwick_shen:
     base: blue_baldry_shen
-    type: udgsizes.model.smf_dwarf.SmfDwarfModel
+    type: udgsizes.model.sm_size.Model
     variables:
       logmstar:
         func: mstar.schechter_baldry
@@ -147,6 +113,10 @@ models:
           max: 1
           step: 0.2
 
+  blue_sedgwick_shen_colour:
+    base: blue_sedgwick_shen
+    type: udgsizes.model.sm_size_colour.Model
+
   blue_sedgwick_shen_udg:
     base: blue_sedgwick_shen
     variables:
@@ -158,46 +128,7 @@ grid:
   n_samples: 10000
   burnin: 1000
 
-  udgsizes.model.sb_size.SbSizeModel:
-    parameters:
-      rec_phys:
-        alpha:
-          min: 2
-          max: 5
-          step: 0.05
-      uae_phys:
-        k:
-          min: 0
-          max: 2
-          step: 0.05
-
-  udgsizes.model.smf_size.SmfSizeModel:
-    parameters:
-      rec_phys:
-        alpha:
-          min: 3
-          max: 8
-          step: 0.2
-      logmstar:
-        a:
-          min: -1.5
-          max: 1.5
-          step: 0.2
-
-  udgsizes.model.smf.SmfModel:
-    parameters:
-      rec_phys_offset:
-        alpha:
-          min: 0.15
-          max: 0.30
-          step: 0.01
-      logmstar:
-        a:
-          min: -1.55
-          max: -1.30
-          step: 0.02
-
-  udgsizes.model.smf_dwarf.SmfDwarfModel:
+  udgsizes.model.sm_size.Model:
     parameters:
       rec_phys_offset:
         alpha:
@@ -208,6 +139,31 @@ grid:
         a:
           min: -1.65
           max: -1.25
+          step: 0.025
+    priors:
+      logmstar:
+        a:
+          func: udgsizes.model.priors.gaussian
+          pars:
+            mu: -1.45
+            sigma: 0.05
+
+  udgsizes.model.sm_size_colour.Model:  # Coarse sm_size model that also varies colour model
+    parameters:
+      rec_phys_offset:
+        alpha:
+          min: 0.2
+          max: 0.8
+          step: 0.05
+      logmstar:
+        a:
+          min: -1.65
+          max: -1.25
+          step: 0.05
+      colour:
+        colour_min:
+          min: 0.3
+          max: 0.4
           step: 0.025
     priors:
       logmstar:
