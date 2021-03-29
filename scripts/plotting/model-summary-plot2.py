@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from udgsizes.fitting.grid import ParameterGrid
 from udgsizes.obs.sample import load_sample
 
-MODEL_NAME = "blue_sedgwick_shen"
+MODEL_NAME = "blue_sedgwick_shen_final"
 SAVEFIG = False
 FIGHEIGHT = 2
 FONTSIZE = 14
@@ -130,7 +130,7 @@ def plot_observations(ax_dict, color="b"):
 
 
 if __name__ == "__main__":
-
+    """
     from udgsizes.core import get_config
     config = get_config()
     model_type = "udgsizes.model.smf_dwarf.SmfDwarfModel"
@@ -139,10 +139,10 @@ if __name__ == "__main__":
     config["grid"][model_type]["parameters"]["logmstar"]["a"]["min"] = -1.50
     config["grid"][model_type]["parameters"]["logmstar"]["a"]["max"] = -1.35
     config["grid"][model_type]["parameters"]["logmstar"]["a"]["step"] = 0.05
-
     grid = ParameterGrid(MODEL_NAME, config=config)
+    """
 
-    # grid = ParameterGrid(MODEL_NAME)
+    grid = ParameterGrid(MODEL_NAME)
 
     # fig = plt.figure(figsize=(FIGHEIGHT * len(PAR_NAMES), FIGHEIGHT * 1.2))
     fig = plt.figure(figsize=(5, 7.5))
