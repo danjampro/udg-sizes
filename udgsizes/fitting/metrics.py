@@ -14,7 +14,8 @@ class MetricEvaluator(UdgSizesBase):
     """ A class to calculate statistical metrics to compare model samples to observations. """
 
     _metric_names = ('log_likelihood_poisson', 'log_likelihood_colour', 'kstest_2d',
-                     'udg_power_law', "n_udg",  "n_selected", "n_total")
+                     'udg_power_law', "n_udg",  "n_selected", "n_total", "kstest_rec_obs_jig",
+                     "kstest_uae_obs_jig", "kstest_colour_obs")
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -99,3 +100,18 @@ class MetricEvaluator(UdgSizesBase):
         rec_phys = df["rec_phys"].values[df["is_udg"].values == 1]
         fit_result = powerlaw.Fit(rec_phys, xmin=rec_phys_min)
         return fit_result.power_law.alpha
+
+    def _kstest_rec_obs_jig(self, df):
+        vobs = self._observations["rec_arcsec"]
+        vmod = df["rec_obs_jig"].values
+        return kstest(vobs, vmod)[1]
+
+    def _kstest_uae_obs_jig(self, df):
+        vobs = self._observations["mueff_av"]
+        vmod = df["uae_obs_jig"].values
+        return kstest(vobs, vmod)[1]
+
+    def _kstest_colour_obs(self, df):
+        vobs = self._observations["gr"]
+        vmod = df["colour_obs"].values
+        return kstest(vobs, vmod)[1]
