@@ -112,6 +112,6 @@ class MetricEvaluator(UdgSizesBase):
         return stats.kstest(vobs, vmod)[1]
 
     def _kstest_colour_obs(self, df):
-        vobs = self._observations["gr"]
+        vobs = self._observations["g_r"]
         vmod = df["colour_obs"].values
         return stats.kstest(vobs, vmod)[1]
