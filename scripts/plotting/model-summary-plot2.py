@@ -3,12 +3,13 @@ import matplotlib.pyplot as plt
 from udgsizes.fitting.grid import ParameterGrid
 from udgsizes.obs.sample import load_sample
 
+# MODEL_NAME = "blue_sedgwick_shen"
 MODEL_NAME = "blue_sedgwick_shen_final"
 SAVEFIG = False
 FIGHEIGHT = 2
 FONTSIZE = 14
 BINS_OBS = 10
-BINS_MODEL = 20
+BINS_MODEL = 30
 PAR_NAMES = "logmstar", "redshift", "rec_phys", "uae_obs_jig", "rec_obs_jig", "colour_obs"
 
 LABELS = {"logmstar": r"$\log_{10}\ \mathrm{M_{*} / M_{\odot}}$",
@@ -81,7 +82,7 @@ def plot_best_samples(grid, ax_dict, metric="likelihood", q=0.9):
             centres[key] = 0.5 * (edges[1:] + edges[:-1])
 
             mins[key] = np.minimum(mins[key], hist)
-            maxs[key] = np.maximum(mins[key], hist)
+            maxs[key] = np.maximum(maxs[key], hist)
 
     for key, ax in ax_dict.items():
         ax.fill_between(centres[key], mins[key], maxs[key], color="k", alpha=0.3, linewidth=0.0)
