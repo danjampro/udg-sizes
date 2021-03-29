@@ -192,19 +192,24 @@ class ParameterGrid(UdgSizesBase):
         df["prior"] = prior
         return df
 
-    def identify_confident(self, metric=None, q=0.9, as_bool_array=False):
+    def _identify_confident(self, metric=None, q=0.9):
         """ Identify best models within confidence interval. """
+        if metric is None:
+            metric = self._default_metric
+
         df = self.load_metrics()
+
         values = df[metric].values
         threshold = confidence_threshold(values, q=q)
         cond = values >= threshold
-        if as_bool_array:
-            return cond
-        return df[cond].reset_index(drop=True)
 
-    def load_confident_samples(self, **kwargs):
+        self.logger.debug(f"Identified {cond.sum()} models for q={q:.2f}.")
+
+        return cond
+
+    def load_best_samples(self, **kwargs):
         """ Identify best models within confidence interval, returning a generator. """
-        cond = self.identify_confident(as_bool_array=True, **kwargs)
+        cond = self._identify_confident(**kwargs)
         return (self.load_sample(i) for i in range(self.n_permutations) if cond[i])
 
     def get_best_metrics(self, metric=None, **kwargs):
