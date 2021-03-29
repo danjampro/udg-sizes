@@ -4,9 +4,10 @@ import matplotlib.pyplot as plt
 
 from udgsizes.fitting.grid import ParameterGrid
 from udgsizes.obs.sample import load_sample
+from udgsizes.utils.selection import GR_MIN, GR_MAX
 
-# MODEL_NAME = "blue_sedgwick_shen"
-MODEL_NAME = "blue_sedgwick_shen_final"
+MODEL_NAME = "blue_sedgwick_shen"
+# MODEL_NAME = "blue_sedgwick_shen_final"
 SAVEFIG = False
 FIGHEIGHT = 2
 FONTSIZE = 14
@@ -26,44 +27,11 @@ RANGES = {"logmstar": (5, 10.5),
           "rec_phys": (0, 20),
           "uae_obs_jig": (24, 28),
           "rec_obs_jig": (3, 10),
-          "colour_obs": (0, 0.4)}
+          "colour_obs": (GR_MIN, GR_MAX)}
 
 OBSKEYS = {"uae_obs_jig": "mueff_av",
            "rec_obs_jig": "rec_arcsec",
            "colour_obs": "g_r"}
-
-
-# TODO: Add KS values to graphs
-# TODO: Make into grid method / plotting utils
-
-
-"""
-def plot_all_samples(grid, ax_dict, alpha_max=0.2, alpha_min=0, metric="likelihood", linewidth=1):
-
-    dfm = grid.load_metrics()
-
-    # Scale transparency with likelihood
-    alphas = alpha_max * dfm[metric].values / dfm[metric].max()
-
-    for i in range(dfm.shape[0]):
-
-        if alphas[i] <= alpha_min:
-            continue
-
-        # Apply selection
-        df = grid.load_sample(i)
-        df = df[df["selected_jig"].values == 1].reset_index(drop=True)
-
-        for key, ax in ax_dict.items():
-
-            values = df[key].values
-            hist, edges = np.histogram(values, range=RANGES[key], bins=BINS_MODEL, density=True)
-            centres = 0.5 * (edges[1:] + edges[:-1])
-
-            ax.plot(centres, hist, "-", alpha=alphas[i], linewidth=linewidth, color="k")
-
-    return ax_dict
-"""
 
 
 def plot_best_samples(grid, ax_dict, metric="likelihood", q=0.5):
@@ -137,7 +105,7 @@ def plot_observations(grid, ax_dict, color="b"):
 
 
 if __name__ == "__main__":
-    """
+    # """
     from udgsizes.core import get_config
     config = get_config()
     model_type = "udgsizes.model.smf_dwarf.SmfDwarfModel"
@@ -147,9 +115,9 @@ if __name__ == "__main__":
     config["grid"][model_type]["parameters"]["logmstar"]["a"]["max"] = -1.35
     config["grid"][model_type]["parameters"]["logmstar"]["a"]["step"] = 0.05
     grid = ParameterGrid(MODEL_NAME, config=config)
-    """
+    # """
 
-    grid = ParameterGrid(MODEL_NAME)
+    # grid = ParameterGrid(MODEL_NAME)
 
     # fig = plt.figure(figsize=(FIGHEIGHT * len(PAR_NAMES), FIGHEIGHT * 1.2))
     fig = plt.figure(figsize=(5, 7.5))
