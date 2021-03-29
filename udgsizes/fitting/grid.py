@@ -182,6 +182,10 @@ class ParameterGrid(UdgSizesBase):
         values = [df[k].values for k in keys]
         df["kstest_min"] = np.min(values, axis=0)
 
+        keys = "kstest_colour_obs", "kstest_2d"
+        values = [df[k].values for k in keys]
+        df["kstest_min_2d"] = np.min(values, axis=0)
+
         # Calculate prior
         prior = np.ones(df.shape[0])
 
@@ -220,12 +224,17 @@ class ParameterGrid(UdgSizesBase):
 
         return cond
 
-    def load_best_samples(self, **kwargs):
+    def load_confident_samples(self, **kwargs):
         """ Identify best models within confidence interval, returning a generator. """
         cond = self._identify_confident(**kwargs)
         return (self.load_sample(i) for i in range(self.n_permutations) if cond[i])
 
-    def get_best_metrics(self, metric=None, **kwargs):
+    def load_confident_metrics(self, **kwargs):
+        """ Identify best models within confidence interval, returning a generator. """
+        cond = self._identify_confident(**kwargs)
+        return self.load_metrics()[cond]
+
+    def get_best_metrics(self, metric=None, q=None, **kwargs):
         """
         """
         df = self.load_metrics()

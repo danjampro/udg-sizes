@@ -8,11 +8,11 @@ from udgsizes.obs.sample import load_sample
 from udgsizes.utils.selection import GR_MIN, GR_MAX
 
 MODEL_NAME = "blue_sedgwick_shen_final"
-SAVEFIG = False
+SAVEFIG = True
 FONTSIZE = 14
 BINS_OBS = 10
 BINS_MODEL = 20
-METRIC_BEST = "kstest_min"
+METRIC_BEST = "kstest_min_2d"
 PAR_NAMES = "logmstar", "redshift", "rec_phys", "uae_obs_jig", "rec_obs_jig", "colour_obs"
 
 LABELS = {"logmstar": r"$\log_{10}\ \mathrm{M_{*} / M_{\odot}}$",
