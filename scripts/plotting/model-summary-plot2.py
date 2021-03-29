@@ -11,6 +11,7 @@ SAVEFIG = True
 FONTSIZE = 14
 BINS_OBS = 10
 BINS_MODEL = 20
+METRIC = "posterior"
 METRIC_BEST = "kstest_min_2d"
 PAR_NAMES = "logmstar", "redshift", "rec_phys", "uae_obs_jig", "rec_obs_jig", "colour_obs"
 
@@ -37,14 +38,14 @@ KSTEST_KEYS = {"uae_obs_jig": "kstest_2d",
                "colour_obs": "kstest_colour_obs"}
 
 
-def plot_best_samples(grid, ax_dict, metric="likelihood", q=0.5):
+def plot_best_samples(grid, ax_dict, q=0.5):
     """
     """
     mins = {_: np.ones(BINS_MODEL) * np.inf for _ in PAR_NAMES}
     maxs = {_: np.ones(BINS_MODEL) * -np.inf for _ in PAR_NAMES}
     centres = {}
 
-    for df in grid.load_confident_samples(q=q, metric=metric):
+    for df in grid.load_confident_samples(q=q, metric=METRIC):
 
         # Apply selection
         df = df[df["selected_jig"].values == 1].reset_index(drop=True)

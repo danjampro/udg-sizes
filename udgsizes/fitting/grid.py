@@ -46,7 +46,7 @@ def load_metrics(model_name, **kwargs):
 class ParameterGrid(UdgSizesBase):
     """ N-dimensional nested parameter grid.
     """
-    _default_metric = "likelihood"  # TODO: Change to "posterior"
+    _default_metric = "posterior"  # TODO: Change to "posterior"
 
     def __init__(self, model_name, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -145,10 +145,10 @@ class ParameterGrid(UdgSizesBase):
         df = self.load_sample(index, select=True)
         return fit_summary_plot(df=df, config=self.config, logger=self.logger, **kwargs)
 
-    def load_best_sample(self, metric=None, apply_prior=True, **kwargs):
+    def load_best_sample(self, metric=None, **kwargs):
         """
         """
-        index_best = self._get_best_index(metric=metric, apply_prior=apply_prior)
+        index_best = self._get_best_index(metric=metric)
         return self.load_sample(index=index_best, **kwargs)
 
     def load_sample(self, index, select=True):
@@ -207,6 +207,8 @@ class ParameterGrid(UdgSizesBase):
                 prior *= func(df[flattened_name].values)
 
         df["prior"] = prior
+        df["posterior"] = df["likelihood"] * df["prior"]
+
         return df
 
     def _identify_confident(self, metric=None, q=0.9):
@@ -282,7 +284,7 @@ class ParameterGrid(UdgSizesBase):
 
         return result
 
-    def parameter_stats(self, key, metric=None, apply_prior=True):
+    def parameter_stats(self, key, metric=None):
         """ Return mean and std for a given parameter """
 
         if metric is None:
@@ -291,10 +293,8 @@ class ParameterGrid(UdgSizesBase):
         df = self.load_metrics()
 
         weights = df[metric].values
-        if apply_prior:
-            weights *= df["prior"].values
-
         values = df[key].values
+
         mean = np.average(values, weights=weights)
         std = np.sqrt(np.average((values-mean)**2, weights=weights))
 
@@ -302,8 +302,7 @@ class ParameterGrid(UdgSizesBase):
 
     # Plotting
 
-    def plot_2d_hist(self, xkey, ykey, metric=None, plot_indices=False, apply_prior=False,
-                     **kwargs):
+    def plot_2d_hist(self, xkey, ykey, metric=None, plot_indices=False, **kwargs):
         """
         """
         if metric is None:
@@ -311,8 +310,6 @@ class ParameterGrid(UdgSizesBase):
         df = self.load_metrics()
 
         metrics = df[metric].values
-        if apply_prior:
-            metrics *= df["prior"].values
 
         ax = plot_2d_hist(df[xkey].values, df[ykey].values, metrics, **kwargs)
         ax.set_xlabel(xkey)
@@ -341,8 +338,7 @@ class ParameterGrid(UdgSizesBase):
 
         return ax
 
-    def marginal_likelihood_histogram(self, key, metric=None, ax=None, show=True, apply_prior=False,
-                                      **kwargs):
+    def marginal_likelihood_histogram(self, key, metric=None, ax=None, show=True, **kwargs):
         """
         """
         if metric is None:
@@ -368,17 +364,14 @@ class ParameterGrid(UdgSizesBase):
 
         return ax
 
-    def threshold_plot(self, xkey, ykey, metric=None, plot_indices=False, apply_prior=True,
-                       **kwargs):
+    def threshold_plot(self, xkey, ykey, metric=None, plot_indices=False, **kwargs):
         """
         """
         if metric is None:
             metric = self._default_metric
-        df = self.load_metrics()
 
+        df = self.load_metrics()
         metrics = df[metric].values
-        if apply_prior:
-            metrics *= df["prior"].values
 
         ax = threshold_plot(df[xkey].values, df[ykey].values, metrics, xlabel=xkey, ylabel=ykey,
                             **kwargs)
@@ -426,16 +419,17 @@ class ParameterGrid(UdgSizesBase):
                 result.append(param_dict[qname][parname])
         return result
 
-    def _get_best_index(self, metric=None, df=None, func=np.nanargmax, apply_prior=True):
+    def _get_best_index(self, metric=None, df=None, func=np.nanargmax):
         """
         """
         if metric is None:
             metric = self._default_metric
+
         if df is None:
             df = self.load_metrics()
+
         values = df[metric].values
-        if apply_prior:
-            values *= df["prior"].values
+
         return func(values)
 
     def _sample(self, index, n_samples, burnin):
