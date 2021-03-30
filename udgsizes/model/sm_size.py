@@ -9,7 +9,8 @@ from udgsizes.utils.cosmology import kpc_to_arcsec
 from udgsizes.utils import shen
 from udgsizes.utils.selection import GR_MAX, GR_MIN
 from udgsizes.model.colour import EmpiricalColourModel
-from udgsizes.model.kcorrector import EmpiricalKCorrector as KCorrector
+# from udgsizes.model.kcorrector import EmpiricalKCorrector as KCorrector
+from udgsizes.model.kcorrector import GamaKCorrector as KCorrector
 
 
 class Model(ModelBase):
@@ -173,7 +174,7 @@ class Model(ModelBase):
         """
         """
         rec_phys_mean = self._mean_rec_phys(logmstar, **hyper_params['rec_phys_offset'])
-        rec_phys = apply_rec_offset(rec_phys_mean, rec_phys_offset)
+        rec_phys = shen.apply_rec_offset(rec_phys_mean, rec_phys_offset)
         colour_rest_mean = self._colour_model.get_mean_colour_rest(logmstar)
         colour_rest = colour_rest_mean + colour_rest_offset
 

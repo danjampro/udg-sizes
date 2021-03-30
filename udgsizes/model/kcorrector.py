@@ -1,8 +1,11 @@
 import numpy as np
-from scipy.interpolate import NearestNDInterpolator
+import matplotlib.pyplot as plt
+from scipy.stats import binned_statistic_2d
+from scipy.interpolate import NearestNDInterpolator, LinearNDInterpolator
 
 from udgsizes.base import UdgSizesBase
 from udgsizes.utils import kcorrect
+from udgsizes.obs.sample import load_gama_masses
 
 
 class KCorrector(UdgSizesBase):
@@ -115,3 +118,70 @@ class InvEmpiricalKCorrector(EmpiricalKCorrector):
         """
         point = [colour_rest, redshift]
         return self._calculate_kg([point])[0] - self._calculate_kr([point])[0]
+
+
+class GamaKCorrector(KCorrector):
+    """ Calculate k-corrections based on mean relation of GAMA galaxies with redshift. """
+
+    def __init__(self, lambdar=True, zmax=0.4, bins_z=20, bins_gr=4, gr_min=-0.1, gr_max=1.0,
+                 **kwargs):
+        super().__init__(**kwargs)
+
+        self._lambdar = lambdar
+        self._zmax = zmax
+        self._gr_min = gr_min
+        self._gr_max = gr_max
+
+        dfg = load_gama_masses(lambdar=lambdar, z_max=zmax)
+        self._redshift = dfg["redshift"].values
+        self._gr_rest = dfg["gr"].values
+        self._kr = dfg["kcorr_r"].values
+        self._kg = dfg["kcorr_g"].values
+
+        cond = (self._redshift >= self._zmin) & (self._redshift < self._zmax)
+        cond &= (self._gr_rest >= self._gr_min) & (self._gr_rest < self._gr_max)
+
+        self._redshift = self._redshift[cond]
+        self._gr_rest = self._gr_rest[cond]
+        self._kr = self._kr[cond]
+        self._kg = self._kg[cond]
+
+        histkwargs = {"bins": (bins_z, bins_gr), "x": self._redshift, "y": self._gr_rest,
+                      "range": ((self._zmin, self._zmax), (self._gr_min, self._gr_max)),
+                      "statistic": "median"}
+
+        self._kg_av, e1, e2, _ = binned_statistic_2d(values=self._kg, **histkwargs)
+        self._kr_av, e1, e2, _ = binned_statistic_2d(values=self._kr, **histkwargs)
+
+        c1 = 0.5 * (e1[1:] + e1[:-1])
+        c2 = 0.5 * (e2[1:] + e2[:-1])
+
+        yy, xx = np.meshgrid(c2, c1)
+        points = np.vstack([xx.reshape(-1), yy.reshape(-1)]).T
+
+        self._interp_kg = LinearNDInterpolator(points, self._kg_av.reshape(-1), fill_value=0)
+        self._interp_kr = LinearNDInterpolator(points, self._kr_av.reshape(-1), fill_value=0)
+
+    def calculate_kr(self, colour_rest, redshift):
+        """
+        """
+        return self._interp_kr([redshift, colour_rest])[0]
+
+    def calculate_kgr(self, colour_rest, redshift):
+        """
+        """
+        point = [redshift, colour_rest]
+        return self._interp_kg(point)[0] - self._interp_kr(point)[0]
+
+    def summary_plot(self):
+
+        fig, ax = plt.subplots()
+
+        ax.plot(self._redshift, self._kg - self._kr, "k+", markersize=1)
+
+        zz = np.linspace(0, self._zmax, 50)
+        for gr in (0.1, 0.2, 0.4, 0.6):
+            kgr = [self.calculate_kgr(gr, z) for z in zz]
+            ax.plot(zz, kgr, "-")
+
+        plt.show(block=False)

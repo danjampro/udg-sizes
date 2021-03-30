@@ -14,7 +14,6 @@ from udgsizes.obs.sample import load_gama_masses, load_leisman_udgs
 COLOUR_MEAS_ERROR = 0.06  # Fiducial colour measurement error from GAMA
 # COLOUR_MIN = 0.35  # Minimum average rest frame colour based on known late type dwarfs
 COLOUR_MIN = 0.4
-# COLOUR_MIN = -1
 
 
 class ColourModel(UdgSizesBase):
@@ -33,7 +32,7 @@ def clipped_std(data):
 
 class EmpiricalColourModel(ColourModel):
 
-    def __init__(self, bins=9, logmstar_min=6.5, logmstar_max=11, lambdar=False, use_leisman=False,
+    def __init__(self, bins=9, logmstar_min=6.5, logmstar_max=11, lambdar=True, use_leisman=False,
                  colour_min=COLOUR_MIN, **kwargs):
         super().__init__(**kwargs)
 
