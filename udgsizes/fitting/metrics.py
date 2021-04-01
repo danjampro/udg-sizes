@@ -1,3 +1,4 @@
+from contextlib import suppress
 import numpy as np
 from scipy import stats
 
@@ -39,8 +40,9 @@ class MetricEvaluator(UdgSizesBase):
             _metric_name = "_" + metric_name
             result[metric_name] = getattr(self, _metric_name)(df)
 
-        result["log_likelihood"] = result["log_likelihood_poisson"] + \
-            result["log_likelihood_colour"]
+        with suppress(KeyError):
+            result["log_likelihood"] = result["log_likelihood_poisson"] + \
+                result["log_likelihood_colour"]
 
         return result
 
