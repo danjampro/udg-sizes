@@ -16,9 +16,11 @@ if __name__ == "__main__":
     metric_name = args.metric
     thinning = args.thinning
 
+    grid = ParameterGrid(model_name)
+
+    KEYS_IGNORE.extend([k for k in grid._evaluator._metric_names if k != metric_name])
     keys_ignore = [k for k in KEYS_IGNORE if k != metric_name]
 
-    grid = ParameterGrid(model_name)
     values = []
     for i in range(grid.n_permutations):
         values.append(grid.evaluate_one(index=i, thinning=thinning,

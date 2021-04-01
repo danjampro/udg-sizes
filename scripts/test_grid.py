@@ -9,15 +9,15 @@ SAMPLE = True
 
 if __name__ == "__main__":
 
-    model_name = "blue_sedgwick_shen_colour"
-    model_type = "udgsizes.model.sm_size_colour.Model"
+    model_name = "blue_sedgwick_shen"
+    model_type = "udgsizes.model.sm_size.Model"
 
     config = get_config()
     config["grid"][model_type]["parameters"]["rec_phys_offset"]["alpha"]["max"] = 0.6
-    config["grid"][model_type]["parameters"]["rec_phys_offset"]["alpha"]["step"] = 0.1
-    config["grid"][model_type]["parameters"]["logmstar"]["a"]["min"] = -1.45
-    config["grid"][model_type]["parameters"]["logmstar"]["a"]["max"] = -1.50
-    config["grid"][model_type]["parameters"]["logmstar"]["a"]["step"] = 0.1
+    config["grid"][model_type]["parameters"]["rec_phys_offset"]["alpha"]["step"] = 0.05
+    config["grid"][model_type]["parameters"]["logmstar"]["a"]["min"] = -1.50
+    config["grid"][model_type]["parameters"]["logmstar"]["a"]["max"] = -1.45
+    config["grid"][model_type]["parameters"]["logmstar"]["a"]["step"] = 0.05
 
     metrics_ignore = ["kstest_2d"]  # Takes too long for whole grid
     n_samples = 500

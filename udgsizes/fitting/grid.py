@@ -186,6 +186,7 @@ class ParameterGrid(UdgSizesBase):
             keys = "kstest_colour_obs", "kstest_2d"
             values = [df[k].values for k in keys]
             df["kstest_min_2d"] = np.min(values, axis=0)
+            df["likelihood_ks"] = df["kstest_min_2d"] * df["kstest_colour_obs"]
 
         # Calculate prior
         prior = np.ones(df.shape[0])
@@ -209,6 +210,8 @@ class ParameterGrid(UdgSizesBase):
 
         df["prior"] = prior
         df["posterior"] = df["likelihood"] * df["prior"]
+        with suppress(KeyError):
+            df["posterior_ks"] = df["likelihood_ks"] * df["prior"]
 
         return df
 
