@@ -137,14 +137,6 @@ class ParameterGrid(UdgSizesBase):
 
         return df
 
-    def summary_plot(self, index=None, metric=None, **kwargs):
-        """
-        """
-        if index is None:
-            index = self._get_best_index(metric=metric)
-        df = self.load_sample(index, select=True)
-        return fit_summary_plot(df=df, config=self.config, logger=self.logger, **kwargs)
-
     def load_best_sample(self, metric=None, **kwargs):
         """
         """
@@ -214,21 +206,6 @@ class ParameterGrid(UdgSizesBase):
             df["posterior_ks"] = df["likelihood_ks"] * df["prior"]
 
         return df
-
-    def _identify_confident(self, metric=None, q=0.9):
-        """ Identify best models within confidence interval. """
-        if metric is None:
-            metric = self._default_metric
-
-        df = self.load_metrics()
-
-        values = df[metric].values
-        threshold = confidence_threshold(values, q=q)
-        cond = values >= threshold
-
-        self.logger.debug(f"Identified {cond.sum()} models for q={q:.2f}.")
-
-        return cond
 
     def load_confident_samples(self, **kwargs):
         """ Identify best models within confidence interval, returning a generator. """
@@ -382,6 +359,14 @@ class ParameterGrid(UdgSizesBase):
 
         return ax
 
+    def summary_plot(self, index=None, metric=None, **kwargs):
+        """
+        """
+        if index is None:
+            index = self._get_best_index(metric=metric)
+        df = self.load_sample(index, select=True)
+        return fit_summary_plot(df=df, config=self.config, logger=self.logger, **kwargs)
+
     # Private methods
 
     def _setup_datadir(self, overwrite):
@@ -454,3 +439,18 @@ class ParameterGrid(UdgSizesBase):
         model.sample(hyper_params=hyper_params, filename=filename, n_samples=n_samples,
                      burnin=burnin)
         self.logger.debug(f"Finished grid index {index} of {self.n_permutations}.")
+
+    def _identify_confident(self, metric=None, q=0.9):
+        """ Identify best models within confidence interval. """
+        if metric is None:
+            metric = self._default_metric
+
+        df = self.load_metrics()
+
+        values = df[metric].values
+        threshold = confidence_threshold(values, q=q)
+        cond = values >= threshold
+
+        self.logger.debug(f"Identified {cond.sum()} models for q={q:.2f}.")
+
+        return cond

@@ -2,8 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
 
+
 def scale_to_gaussian(df, key, offset=1E-32, factor=1, xmin=None, xmax=None, makeplots=False,
-                      **kwargs):
+                      lmbda=None, **kwargs):
     """
     """
     values = factor * df[key].values
@@ -15,7 +16,11 @@ def scale_to_gaussian(df, key, offset=1E-32, factor=1, xmin=None, xmax=None, mak
 
     values = (values - xmin) / (xmax - xmin) + offset
 
-    result, lam = stats.boxcox(values, **kwargs)
+    result = stats.boxcox(values, lmbda=lmbda, **kwargs)
+    if lmbda is None:
+        result, lam = result
+    else:
+        lam = lmbda
 
     if makeplots:
         plt.figure(figsize=(8, 4))
@@ -57,7 +62,7 @@ class RescaledKde3D():
 
         self.kde = stats.gaussian_kde(points)
 
-    def evaulate(self, df, **kwargs):
+    def evaluate(self, df, **kwargs):
         """
         """
         values = {}
@@ -66,8 +71,9 @@ class RescaledKde3D():
 
             factor = self.factors.get(k, 1)
             values[k], _, _, _ = scale_to_gaussian(df, key=ko, factor=factor, xmin=self.mins[k],
-                                                   xmax=self.maxs[k], **kwargs)
-        points = np.vstack([self.values[k] for k in self.keys])
+                                                   xmax=self.maxs[k], lmbda=self.lambdas[k],
+                                                   **kwargs)
+        points = np.vstack([values[k] for k in self.keys])
 
         return self.kde(points)
 
@@ -75,7 +81,7 @@ class RescaledKde3D():
         """ # Doesn't work...
         """
         from mayavi import mlab
-        
+
         # Create a regular 3D grid with 50 points in each dimension
         xmin, ymin, zmin = self.mins.values()
         xmax, ymax, zmax = self.maxs.values()

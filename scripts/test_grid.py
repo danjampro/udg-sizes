@@ -5,7 +5,7 @@ from udgsizes.fitting.grid import ParameterGrid
 
 MAKEPLOTS = True
 CHECK_INITIAL_VALUES = False
-SAMPLE = True
+SAMPLE = False
 
 if __name__ == "__main__":
 

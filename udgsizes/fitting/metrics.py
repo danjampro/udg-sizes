@@ -28,11 +28,14 @@ class MetricEvaluator(UdgSizesBase):
         """
         if metrics_ignore is None:
             metrics_ignore = []
+
         result = {}
         for metric_name in self._metric_names:
             if metric_name in metrics_ignore:
-                self.logger.debug(f"Skipping metric: {metric_name}.")
                 continue
+
+            self.logger.info(metric_name)
+
             _metric_name = "_" + metric_name
             result[metric_name] = getattr(self, _metric_name)(df)
 
