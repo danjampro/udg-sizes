@@ -9,10 +9,6 @@ if __name__ == "__main__":
     cond = df["selected_jig"].values == 1
     df = df[cond].reset_index(drop=True)
 
-    #kde = RescaledKde3D(df, makeplots=True)
-
-    #kde.summary_plot()
-
     pdf = TransformedGaussianPDF(df, makeplots=True)
 
     pdf.summary_plot()
