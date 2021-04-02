@@ -7,7 +7,7 @@ def scale_to_gaussian(df, key, offset=1E-32, factor=1, xmin=None, xmax=None, mak
                       lmbda=None, **kwargs):
     """
     """
-    values = factor * df[key].values
+    values = factor * df[key].values.copy()
 
     if xmin is None:
         xmin = values.min()
