@@ -97,7 +97,7 @@ class TransformedGaussianPDF():
         plt.show(block=False)
 
 
-class RescaledKde3D():
+class TransformedKDE():
 
     keys = ("uae_obs_jig", "rec_obs_jig", "colour_obs")
 

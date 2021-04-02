@@ -9,7 +9,7 @@ from udgsizes.obs.sample import load_sample
 from udgsizes.utils.stats.kstest import kstest_2d
 from udgsizes.utils.selection import parameter_ranges
 from udgsizes.utils.stats.likelihood import fit_colour_gaussian
-from udgsizes.utils.stats.kde import TransformedGaussianPDF
+from udgsizes.utils.stats.kde import TransformedGaussianPDF, TransformedKDE
 
 
 class MetricEvaluator(UdgSizesBase):
@@ -122,6 +122,21 @@ class MetricEvaluator(UdgSizesBase):
         return stats.kstest(vobs, vmod)[1]
 
     def _log_likelihood_gauss_3d(self, df):
+
+        cond = df["selected_jig"].values == 1
+        df = df[cond].reset_index(drop=True)
+
         pdf = TransformedGaussianPDF(df)
         probs = pdf.evaluate(self._observations)
+
+        return np.log(probs).sum()
+
+    def _log_likelihood_kde_3d(self, df):
+
+        cond = df["selected_jig"].values == 1
+        df = df[cond].reset_index(drop=True)
+
+        pdf = TransformedKDE(df)
+        probs = pdf.evaluate(self._observations)
+
         return np.log(probs).sum()
