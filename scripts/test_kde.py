@@ -1,11 +1,15 @@
 from udgsizes.fitting.grid import ParameterGrid
-from udgsizes.utils.stats.kde import RescaledKde3D
+from udgsizes.utils.stats.kde import RescaledKde3D, TransformedGaussianPDF
 
 if __name__ == "__main__":
 
     grid = ParameterGrid("blue_sedgwick_shen")
     df = grid.load_best_sample()
 
-    kde = RescaledKde3D(df, makeplots=True)
+    #kde = RescaledKde3D(df, makeplots=True)
 
-    kde.summary_plot()
+    #kde.summary_plot()
+
+    pdf = TransformedGaussianPDF(df, makeplots=True)
+
+    pdf.summary_plot()
