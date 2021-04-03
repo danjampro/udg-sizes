@@ -202,7 +202,8 @@ class ParameterGrid(UdgSizesBase):
 
         df["prior"] = prior
         df["posterior"] = df["likelihood"] * df["prior"]
-        df["posterior_3d"] = df["likelihood_gauss_3d"] * df["prior"]
+        df["posterior_gauss_3d"] = df["likelihood_gauss_3d"] * df["prior"]
+        df["posterior_kde_3d"] = df["likelihood_kde_3d"] * df["prior"]
         with suppress(KeyError):
             df["posterior_ks"] = df["likelihood_ks"] * df["prior"]
 

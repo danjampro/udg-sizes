@@ -48,20 +48,29 @@ class TransformedGaussianPDF():
         """
         """
         self.values = {}
-        self.lambdas = {}
+        self.lambdas = {"uae_obs_jig": 0.52, "rec_obs_jig": 0.23, "colour_obs": 0.45}
         self.mins = {}
         self.maxs = {}
 
         for k in self.keys:
             factor = self.factors.get(k, 1)
+            lmbda = self.lambdas.get(k, None)
             self.values[k], self.lambdas[k], self.mins[k], self.maxs[k] = scale_to_gaussian(
-                df, key=k, factor=factor, **kwargs)
+                df, key=k, factor=factor, lmbda=lmbda, **kwargs)
 
         points = np.vstack([self.values[k] for k in self.keys])
 
         self.means = points.mean(axis=1)
         self.cov = np.cov(points)
         self.var = stats.multivariate_normal(mean=self.means, cov=self.cov)
+
+    def rescale_observations(self, df, key, **kwargs):
+        """
+        """
+        ko = self.keys_obs[key]
+        factor = self.factors.get(key, 1)
+        return scale_to_gaussian(df, key=ko, factor=factor, xmin=self.mins[key],
+                                 xmax=self.maxs[key], lmbda=self.lambdas[key], **kwargs)[0]
 
     def evaluate(self, df, **kwargs):
         """
@@ -76,22 +85,29 @@ class TransformedGaussianPDF():
         points = np.vstack([values[k] for k in self.keys])
         return self.var.pdf(points.T)
 
-    def summary_plot(self):
+    def summary_plot(self, dfo=None):
         """
         """
         plt.figure(figsize=(4 * len(self.keys), 4))
 
-        for i, key in enumerate(self.keys):
+        for i, k in enumerate(self.keys):
             ax = plt.subplot(1, len(self.keys), i + 1)
 
-            values = self.values[key]
+            values = self.values[k]
             ax.hist(values, density=True)
+
+            if dfo is not None:
+                ko = self.keys_obs[k]
+                factor = self.factors.get(k, 1)
+                valueso = scale_to_gaussian(dfo, key=ko, factor=factor, xmin=self.mins[k],
+                                            xmax=self.maxs[k], lmbda=self.lambdas[k])[0]
+                ax.hist(valueso, density=True, histtype="step", color="k")
 
             xx = np.linspace(values.min(), values.max(), 100)
             pdf = stats.norm(loc=self.means[i], scale=np.sqrt(self.cov[i][i])).pdf
             ax.plot(xx, pdf(xx), "r--")
 
-            ax.set_title(key)
+            ax.set_title(k)
 
         plt.tight_layout()
         plt.show(block=False)
@@ -111,14 +127,15 @@ class TransformedKDE():
         """
         """
         self.values = {}
-        self.lambdas = {}
+        self.lambdas = {"uae_obs_jig": 0.52, "rec_obs_jig": 0.23, "colour_obs": 0.45}
         self.mins = {}
         self.maxs = {}
 
         for k in self.keys:
             factor = self.factors.get(k, 1)
+            lmbda = self.lambdas.get(k, None)
             self.values[k], self.lambdas[k], self.mins[k], self.maxs[k] = scale_to_gaussian(
-                df, key=k, factor=factor, **kwargs)
+                df, key=k, factor=factor, lmbda=lmbda, **kwargs)
 
         points = np.vstack([self.values[k] for k in self.keys])
 
@@ -137,23 +154,32 @@ class TransformedKDE():
                                                    **kwargs)
         points = np.vstack([values[k] for k in self.keys])
 
-        return self.kde(points)
+        return self.kde.pdf(points)
+
+    def rescale_observations(self, df, key, **kwargs):
+        """
+        """
+        ko = self.keys_obs[key]
+        factor = self.factors.get(key, 1)
+        return scale_to_gaussian(df, key=ko, factor=factor, xmin=self.mins[key],
+                                 xmax=self.maxs[key], lmbda=self.lambdas[key], **kwargs)[0]
 
     def summary_plot(self):
         """ # Doesn't work...
         """
-        from mayavi import mlab
-
         # Create a regular 3D grid with 50 points in each dimension
-        xmin, ymin, zmin = self.mins.values()
-        xmax, ymax, zmax = self.maxs.values()
-        xi, yi, zi = np.mgrid[xmin:xmax:20j, ymin:ymax:20j, zmin:zmax:20j]
+        xmin, ymin, zmin = [self.values[k].min() for k in self.keys]
+        xmax, ymax, zmax = [self.values[k].max() for k in self.keys]
+        xi, yi, zi = np.mgrid[xmin:xmax:10j, ymin:ymax:10j, zmin:zmax:10j]
 
         # Evaluate the KDE on a regular grid...
         coords = np.vstack([item.ravel() for item in [xi, yi, zi]])
-        density = self.kde(coords).reshape(xi.shape)
+        print(coords.shape)
+        density = self.kde(coords).reshape((10, 10, 10))
 
-        # Visualize the density estimate as isosurfaces
-        mlab.contour3d(xi, yi, zi, density, opacity=0.5)
-        mlab.axes()
-        mlab.show()
+        plt.figure(figsize=(12, 4))
+        for i, key in enumerate(self.keys):
+            ax = plt.subplot(1, len(self.keys), i + 1)
+            ax.imshow(density.sum(axis=i), origin="lower", cmap="binary")
+
+        plt.show(block=False)
