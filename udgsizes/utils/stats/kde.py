@@ -49,14 +49,19 @@ class TransformedGaussianPDF():
         """
         self.values = {}
         self.lambdas = {"uae_obs_jig": 0.52, "rec_obs_jig": 0.23, "colour_obs": 0.45}
-        self.mins = {}
-        self.maxs = {}
+        self.mins = {"uae_obs_jig": 24, "rec_obs_jig": 3, "colour_obs": -0.42}
+        self.maxs = {"uae_obs_jig": 27, "rec_obs_jig": 10, "colour_obs": 0}
 
         for k in self.keys:
+
             factor = self.factors.get(k, 1)
             lmbda = self.lambdas.get(k, None)
+
+            xmin = self.mins.get(k, None)
+            xmax = self.maxs.get(k, None)
+
             self.values[k], self.lambdas[k], self.mins[k], self.maxs[k] = scale_to_gaussian(
-                df, key=k, factor=factor, lmbda=lmbda, **kwargs)
+                df, key=k, factor=factor, lmbda=lmbda, xmax=xmax, xmin=xmin, **kwargs)
 
         points = np.vstack([self.values[k] for k in self.keys])
 
@@ -128,14 +133,19 @@ class TransformedKDE():
         """
         self.values = {}
         self.lambdas = {"uae_obs_jig": 0.52, "rec_obs_jig": 0.23, "colour_obs": 0.45}
-        self.mins = {}
-        self.maxs = {}
+        self.mins = {"uae_obs_jig": 24, "rec_obs_jig": 3, "colour_obs": -0.42}
+        self.maxs = {"uae_obs_jig": 27, "rec_obs_jig": 10, "colour_obs": 0}
 
         for k in self.keys:
+
             factor = self.factors.get(k, 1)
             lmbda = self.lambdas.get(k, None)
+
+            xmin = self.mins.get(k, None)
+            xmax = self.maxs.get(k, None)
+
             self.values[k], self.lambdas[k], self.mins[k], self.maxs[k] = scale_to_gaussian(
-                df, key=k, factor=factor, lmbda=lmbda, **kwargs)
+                df, key=k, factor=factor, lmbda=lmbda, xmax=xmax, xmin=xmin, **kwargs)
 
         points = np.vstack([self.values[k] for k in self.keys])
 
