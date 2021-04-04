@@ -175,7 +175,7 @@ class TransformedKDE():
                                  xmax=self.maxs[key], lmbda=self.lambdas[key], **kwargs)[0]
 
     def summary_plot(self):
-        """ # Doesn't work...
+        """
         """
         # Create a regular 3D grid with 50 points in each dimension
         xmin, ymin, zmin = [self.values[k].min() for k in self.keys]
