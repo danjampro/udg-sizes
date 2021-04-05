@@ -97,7 +97,7 @@ def plot_2d_hist(x, y, z, ax=None, xrange=None, yrange=None, show=True, smooth=N
 
 
 def threshold_plot(x, y, z, ax=None, legend=True, xrange=None, yrange=None, fontsize=15, show=True,
-                   xlabel=None, ylabel=None, **kwargs):
+                   xlabel=None, ylabel=None, smooth=None, **kwargs):
     """
     """
     if ax is None:
@@ -109,6 +109,9 @@ def threshold_plot(x, y, z, ax=None, legend=True, xrange=None, yrange=None, font
     ny = np.unique(y).size
 
     zz = z.reshape(nx, ny).T
+
+    if smooth is not None:
+        zz = gaussian_filter(zz, smooth)
 
     # Identify the thresholds and make thresholded image
     levels = (confidence_threshold(zz, 0.999999426696856),

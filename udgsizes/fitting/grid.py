@@ -46,7 +46,7 @@ def load_metrics(model_name, **kwargs):
 class ParameterGrid(UdgSizesBase):
     """ N-dimensional nested parameter grid.
     """
-    _default_metric = "posterior"  # TODO: Change to "posterior"
+    _default_metric = "posterior_kde_3d"  # TODO: Change to "posterior"
 
     def __init__(self, model_name, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -219,7 +219,7 @@ class ParameterGrid(UdgSizesBase):
         cond = self._identify_confident(**kwargs)
         return self.load_metrics()[cond]
 
-    def get_best_metrics(self, metric=None, q=None, **kwargs):
+    def get_best_metrics(self, metric=None, **kwargs):
         """
         """
         df = self.load_metrics()
@@ -410,7 +410,7 @@ class ParameterGrid(UdgSizesBase):
                 result.append(param_dict[qname][parname])
         return result
 
-    def _get_best_index(self, metric=None, df=None, func=np.nanargmax):
+    def _get_best_index(self, metric=None, df=None, kstest_min=0.1, func=np.nanargmax):
         """
         """
         if metric is None:
@@ -418,10 +418,18 @@ class ParameterGrid(UdgSizesBase):
 
         if df is None:
             df = self.load_metrics()
+        indices = np.arange(df.shape[0])
+
+        if kstest_min is not None:
+            self.logger.debug(f"Applying kstest_min>{kstest_min:.2f}")
+            cond = df["kstest_min"].values >= kstest_min
+            df = df[cond].reset_index(drop=True)
+            indices = indices[cond]
 
         values = df[metric].values
+        index = func(values)
 
-        return func(values)
+        return indices[index]
 
     def _sample(self, index, n_samples, burnin):
         """

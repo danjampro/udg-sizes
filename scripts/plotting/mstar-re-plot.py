@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 from udgsizes.fitting.grid import ParameterGrid
 from udgsizes.utils import shen
-from udgsizes.model.smf_dwarf import SmfDwarfModel as Model
+from udgsizes.model.sm_size import Model
 
 from udgsizes.obs.sample import load_gama_masses, load_leisman_udgs
 

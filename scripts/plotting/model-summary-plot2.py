@@ -11,8 +11,7 @@ SAVEFIG = True
 FONTSIZE = 14
 BINS_OBS = 10
 BINS_MODEL = 20
-METRIC = "posterior"
-METRIC_BEST = "kstest_min_2d"
+METRIC = "posterior_kde_3d"
 PAR_NAMES = "logmstar", "redshift", "rec_phys", "uae_obs_jig", "rec_obs_jig", "colour_obs"
 
 LABELS = {"logmstar": r"$\log_{10}\ \mathrm{M_{*} / M_{\odot}}$",
@@ -67,7 +66,7 @@ def plot_best_samples(grid, ax_dict, q=0.5):
 def plot_best_sample(grid, ax_dict, linewidth=1.5, color="k"):
     """
     """
-    df = grid.load_best_sample(select=True, metric=METRIC_BEST)
+    df = grid.load_best_sample(select=True, metric=METRIC)
     df = df[df["selected_jig"].values == 1].reset_index(drop=True)
 
     for key, ax in ax_dict.items():
@@ -82,7 +81,7 @@ def plot_best_sample(grid, ax_dict, linewidth=1.5, color="k"):
 def plot_observations(grid, ax_dict, color="b"):
     """
     """
-    metrics = grid.get_best_metrics(metric=METRIC_BEST)
+    metrics = grid.get_best_metrics(metric=METRIC)
     dfo = load_sample(select=True)
 
     for key, ax in ax_dict.items():

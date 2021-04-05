@@ -5,10 +5,10 @@ from matplotlib.gridspec import GridSpec
 
 from udgsizes.core import get_config
 from udgsizes.fitting.grid import ParameterGrid
-# from udgsizes.fitting.utils.plotting import threshold_plot
+from udgsizes.fitting.utils.plotting import threshold_plot
 
 
-def marginal_likelihood_plot(ax, values, weights, range=None, bins=15, fontsize=15, legend=False,
+def marginal_likelihood_plot(ax, values, weights, range=None, bins=10, fontsize=15, legend=False,
                              orientation="vertical", label_axes=False, weights_no_prior=None):
     """
     """
@@ -20,11 +20,11 @@ def marginal_likelihood_plot(ax, values, weights, range=None, bins=15, fontsize=
     histkwargs = {"range": range, "bins": bins, "orientation": orientation, "density": True}
 
     ax.hist(values, weights=weights, histtype="step", color="k", **histkwargs)
-    ax.hist(values, weights=weights, alpha=0.1, color="k", label="No Prior", **histkwargs)
+    ax.hist(values, weights=weights, alpha=0.1, color="k", label="Normal Prior", **histkwargs)
 
     if weights_no_prior is not None:
         ax.hist(values, weights=weights_no_prior, histtype="step", color="dodgerblue",
-                label="Normal Prior", **histkwargs)
+                label="No Prior", **histkwargs)
 
     cond = (values >= range[0]) & (values < range[1])
     values = values[cond]
@@ -67,20 +67,22 @@ if __name__ == "__main__":
     model_name = "blue_sedgwick_shen_final"
     xkey = "rec_phys_offset_alpha"
     ykey = "logmstar_a"
-    zkey = "likelihood"
+    zkey_noprior = "likelihood_kde_3d"
+    zkey = "posterior_kde_3d"
     xlabel = r"$\beta$"
     ylabel = r"$\alpha$"
 
     grid = ParameterGrid(model_name)
     df = grid.load_metrics()
+    metrics = grid.get_best_metrics(metric=zkey)
 
     x = df[xkey].values
     y = df[ykey].values
-    znoprior = df[zkey].values
-    z = df[zkey].values * df["prior"].values
+    znoprior = df[zkey_noprior].values
+    z = df[zkey].values
 
     # xrange = x.min(), x.max()
-    xrange = x.min(), 0.6
+    xrange = x.min(), x.max()
     yrange = y.min(), y.max()
 
     fig = plt.figure(figsize=(7, 7))
@@ -90,9 +92,9 @@ if __name__ == "__main__":
     ax2 = fig.add_subplot(spec[3:10, 7:10])
 
     # Likelihood heatmap
-    # threshold_plot(x=x, y=y, z=z, ax=ax0, xrange=xrange, yrange=yrange)
-    grid.plot_2d_hist(xkey, ykey, metric=zkey, apply_prior=True, xrange=xrange, yrange=yrange,
-                      ax=ax0, smooth=0.8)
+    threshold_plot(x=x, y=y, z=z, ax=ax0, xrange=xrange, yrange=yrange, smooth=0.5)
+    # grid.plot_2d_hist(xkey, ykey, metric=zkey, apply_prior=True, xrange=xrange, yrange=yrange,
+    #                  ax=ax0, smooth=0.8)
 
     # Marginal likelihood hists
     m1, s1 = marginal_likelihood_plot(ax1, x, z, range=xrange, weights_no_prior=znoprior)
@@ -114,6 +116,9 @@ if __name__ == "__main__":
     ax0.plot(xlim, [m2+s2, m2+s2], **CONFLINEKWARGS)
     ax0.set_xlim(xlim)
     ax0.set_ylim(ylim)
+
+    # Plot best fit model
+    # ax0.plot(metrics[xkey], metrics[ykey], "ro", markersize=5, label="Best fit")
 
     # Turn off tick labels on marginals
     plt.setp(ax1.get_xticklabels(), visible=False)
