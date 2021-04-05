@@ -6,7 +6,7 @@ from udgsizes.fitting.grid import ParameterGrid
 from udgsizes.obs.sample import load_sample
 from udgsizes.utils.selection import GR_MIN, GR_MAX
 
-MODEL_NAME = "blue_sedgwick_shen_final"
+MODEL_NAME = "blue_sedgwick_shen_0.35"
 SAVEFIG = True
 FONTSIZE = 14
 BINS_OBS = 10
@@ -32,8 +32,8 @@ OBSKEYS = {"uae_obs_jig": "mueff_av",
            "rec_obs_jig": "rec_arcsec",
            "colour_obs": "g_r"}
 
-KSTEST_KEYS = {"uae_obs_jig": "kstest_2d",
-               "rec_obs_jig": "kstest_2d",
+KSTEST_KEYS = {"uae_obs_jig": "kstest_uae_obs_jig",
+               "rec_obs_jig": "kstest_rec_obs_jig",
                "colour_obs": "kstest_colour_obs"}
 
 
