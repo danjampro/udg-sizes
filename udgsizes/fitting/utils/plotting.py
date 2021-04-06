@@ -61,7 +61,7 @@ def fit_summary_plot(df, dfo=None, show=True, bins=15, select=True, **kwargs):
     return fig
 
 
-def plot_2d_hist(x, y, z, ax=None, xrange=None, yrange=None, show=True, smooth=None):
+def plot_2d_hist(x, y, z, ax=None, xrange=None, yrange=None, show=True, smooth=None, contour=False):
     """
     """
     if ax is None:
@@ -82,6 +82,12 @@ def plot_2d_hist(x, y, z, ax=None, xrange=None, yrange=None, show=True, smooth=N
 
     # Display the thresholded image
     ax.imshow(zz, origin="lower", cmap="binary", extent=extent, aspect="auto")
+
+    if contour:
+        levels = [confidence_threshold(zz, 0.997),
+                  confidence_threshold(zz, 0.95),
+                  confidence_threshold(zz, 0.68)]
+        ax.contour(zz, colors="b", linewidths=1, zorder=10, levels=levels, extent=extent)
 
     # Format axes
     if xrange is not None:

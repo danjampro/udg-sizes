@@ -64,7 +64,7 @@ if __name__ == "__main__":
     CONFLINEKWARGS = {"linewidth": 1.3, "color": "springgreen", "linestyle": "--"}
     FONTSIZE = 14
 
-    model_name = "blue_sedgwick_shen_final"
+    model_name = "blue_sedgwick_shen_0.35"
     xkey = "rec_phys_offset_alpha"
     ykey = "logmstar_a"
     zkey_noprior = "likelihood_kde_3d"
@@ -92,9 +92,8 @@ if __name__ == "__main__":
     ax2 = fig.add_subplot(spec[3:10, 7:10])
 
     # Likelihood heatmap
-    threshold_plot(x=x, y=y, z=z, ax=ax0, xrange=xrange, yrange=yrange, smooth=0.5)
-    # grid.plot_2d_hist(xkey, ykey, metric=zkey, apply_prior=True, xrange=xrange, yrange=yrange,
-    #                  ax=ax0, smooth=0.8)
+    # threshold_plot(x=x, y=y, z=z, ax=ax0, xrange=xrange, yrange=yrange, smooth=0.5)
+    grid.plot_2d_hist(xkey, ykey, metric=zkey, xrange=xrange, yrange=yrange,  ax=ax0, smooth=0.8)
 
     # Marginal likelihood hists
     m1, s1 = marginal_likelihood_plot(ax1, x, z, range=xrange, weights_no_prior=znoprior)

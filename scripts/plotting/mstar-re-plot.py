@@ -21,7 +21,7 @@ BINS = 40
 SIGMA_FACTOR = 1
 FONTSIZE = 16
 
-MODEL_NAME = "blue_sedgwick_shen_final"
+MODEL_NAME = "blue_sedgwick_shen_0.35"
 
 SAVEFIG = True
 
