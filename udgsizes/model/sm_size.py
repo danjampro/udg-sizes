@@ -223,3 +223,23 @@ class Model(ModelBase):
         integral = tplquad(integrand, *lims, epsabs=epsabs, epsrel=epsrel)[0]
 
         return integral
+
+
+class UDGModel(Model):
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def _log_likelihood(self, state, hyper_params):
+        """ The log-likelihood for the full model.
+        """
+        rec_phys_offset, logmstar, redshift, colour_rest_offset = state
+
+        rec_phys_mean = self._mean_rec_phys(logmstar, **hyper_params['rec_phys_offset'])
+        rec_phys = shen.apply_rec_offset(rec_phys_mean, rec_phys_offset)
+
+        # Require UDG sizes
+        if rec_phys < 1.5:
+            return -np.inf
+
+        return super()._log_likelihood(state, hyper_params)

@@ -128,10 +128,7 @@ models:
 
   blue_sedgwick_shen_udg:
     base: blue_sedgwick_shen
-    variables:
-      logmstar:
-        pars:
-          min: 6
+    type: udgsizes.model.sm_size.UDGModel
 
 grid:
   n_samples: 10000
