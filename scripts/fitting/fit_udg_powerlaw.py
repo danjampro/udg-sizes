@@ -43,10 +43,10 @@ def pretty_plot(rec_phys, popt, pcov, bins=10, nsamples=500, fontsize=15, filena
     # ax.plot(centres, y, "ko", markeredgecolor="b", label="Model UDG")
 
     yya = udg_powerlaw(xx, -2.71, popt[1])
-    ax.plot(np.log10(xx), yya, "--", color="dodgerblue", linewidth=1.6, label="vdB+17 (groups)")
+    ax.plot(np.log10(xx), yya, "--", color="dodgerblue", linewidth=1.6, label="vdB17 (groups)")
 
     yyb = udg_powerlaw(xx, -3.40, popt[1])
-    ax.plot(np.log10(xx), yyb, "--", color="orchid", linewidth=1.5, label="vdB+16 (clusters)")
+    ax.plot(np.log10(xx), yyb, "--", color="orchid", linewidth=1.5, label="vdB16 (clusters), AL17")
 
     yybest = udg_powerlaw(xx, *popt)
     ax.plot(np.log10(xx), yybest, "--", color="r", linewidth=1.4, label="Best Fit")
@@ -54,7 +54,7 @@ def pretty_plot(rec_phys, popt, pcov, bins=10, nsamples=500, fontsize=15, filena
     ax.set_yscale("log")
 
     ax.legend(loc="upper right", fontsize=fontsize-3)
-    ax.set_xlabel(r"$\log_{10} \hat{r}_{e}\ \mathrm{[kpc]}$", fontsize=fontsize)
+    ax.set_xlabel(r"$\log_{10}\ \hat{r}_{e}\ \mathrm{[kpc]}$", fontsize=fontsize)
     ax.set_ylabel(r"$\mathrm{PDF}$", fontsize=fontsize)
 
     if filename is not None:

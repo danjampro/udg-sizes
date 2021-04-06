@@ -93,7 +93,7 @@ if __name__ == "__main__":
 
     # Likelihood heatmap
     # threshold_plot(x=x, y=y, z=z, ax=ax0, xrange=xrange, yrange=yrange, smooth=0.5)
-    grid.plot_2d_hist(xkey, ykey, metric=zkey, xrange=xrange, yrange=yrange,  ax=ax0, smooth=0.8)
+    grid.plot_2d_hist(xkey, ykey, metric=zkey, xrange=xrange, yrange=yrange,  ax=ax0, smooth=0.7)
 
     # Marginal likelihood hists
     m1, s1 = marginal_likelihood_plot(ax1, x, z, range=xrange, weights_no_prior=znoprior)

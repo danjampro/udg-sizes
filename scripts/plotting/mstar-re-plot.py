@@ -131,7 +131,8 @@ if __name__ == "__main__":
 
     alpha_mean, alpha_std = grid.parameter_stats("rec_phys_offset_alpha")
 
-    fig, ax = plt.subplots(figsize=(9, 6))
+    # fig, ax = plt.subplots(figsize=(9, 6))
+    fig, ax = plt.subplots(figsize=(12, 6))
 
     plot_gama(ax)
 
