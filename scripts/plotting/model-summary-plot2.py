@@ -37,7 +37,7 @@ KSTEST_KEYS = {"uae_obs_jig": "kstest_uae_obs_jig",
                "colour_obs": "kstest_colour_obs"}
 
 
-def plot_best_samples(grid, ax_dict, q=0.5):
+def plot_best_samples(grid, ax_dict, q=0.9):
     """
     """
     mins = {_: np.ones(BINS_MODEL) * np.inf for _ in PAR_NAMES}

@@ -126,6 +126,11 @@ def threshold_plot(x, y, z, ax=None, legend=True, xrange=None, yrange=None, font
               confidence_threshold(zz, 0.95),
               confidence_threshold(zz, 0.68))
     labels = r">$5\sigma$", r"$5\sigma$", r"$4\sigma$", r"$3\sigma$", r"$2\sigma$",  r"$1\sigma$"
+
+    levels = list(levels)[1:]
+    labels = list(labels)[1:]
+    labels[0] = ">" + labels[1]
+
     tmap = np.zeros_like(zz)
     for level in levels:
         tmap[zz >= level] += 1
@@ -134,7 +139,8 @@ def threshold_plot(x, y, z, ax=None, legend=True, xrange=None, yrange=None, font
     ax.imshow(tmap, origin="lower", cmap="binary", extent=extent, aspect="auto")
 
     # Add the inset discrete threshold colourbar
-    bounds = np.array([0, 1, 2, 3, 4, 5, 6])
+    # bounds = np.array([0, 1, 2, 3, 4, 5, 6])
+    bounds = np.arange(len(levels) + 2)
     cmap = plt.cm.binary
     norm = mpl.colors.BoundaryNorm(bounds, cmap.N)
     axb = inset_axes(ax, width="55%", height="3%", loc=1, borderpad=0.8)

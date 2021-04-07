@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import curve_fit
 from scipy.stats import multivariate_normal
+from scipy.integrate import simps
 
 from udgsizes.model.utils import create_model
 from udgsizes.fitting.grid import ParameterGrid
@@ -22,36 +23,52 @@ def udg_powerlaw(rec_phys, m, c):
     return y
 
 
-def pretty_plot(rec_phys, popt, pcov, bins=10, nsamples=500, fontsize=15, filename=None):
+def pretty_plot(rec_phys, popt, pcov, bins=6, nsamples=500, fontsize=15, filename=None,
+                linewidth=2):
     """
     """
     y, edges = np.histogram(np.log10(rec_phys), bins=bins, density=True)  # Log10 bins
     centres = 0.5 * (edges[1:] + edges[:-1])
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(7, 4.7))
 
     var = multivariate_normal(popt, pcov)
     xx = np.linspace(rec_phys.min(), rec_phys.max(), 10)
 
+    logxx = np.log10(xx)
+    yybest = udg_powerlaw(xx, *popt)
+    normbest = simps(yybest, logxx)
+
     for i in range(nsamples):
         m, c = var.rvs()
         yy = udg_powerlaw(xx, m, c)
-        ax.plot(np.log10(xx), yy, "-", alpha=0.01, linewidth=2, color="0.1")
+        ax.plot(logxx, yy/normbest, "-", alpha=0.01, linewidth=2, color="0.1")
 
-    ax.plot(centres, y, "bo", fillstyle="none", markeredgewidth=1.5, label="Model UDG",
-            markersize=5, zorder=20)
+    ax.plot(centres, y/normbest, "ko", label="Model UDG", markersize=5, zorder=10)
+
+    # ax.plot(centres, y, "bo", fillstyle="none", markeredgewidth=1.5, label="Model UDG",
+    #        markersize=5, zorder=20)
     # ax.plot(centres, y, "ko", markeredgecolor="b", label="Model UDG")
 
-    yya = udg_powerlaw(xx, -2.71, popt[1])
-    ax.plot(np.log10(xx), yya, "--", color="dodgerblue", linewidth=1.6, label="vdB17 (groups)")
+    ax.plot(logxx, yybest/normbest, "--", color="k", linewidth=linewidth, label="Power law fit",
+            zorder=9)
 
     yyb = udg_powerlaw(xx, -3.40, popt[1])
-    ax.plot(np.log10(xx), yyb, "--", color="orchid", linewidth=1.5, label="vdB16 (clusters), AL17")
+    norm = simps(yyb, logxx)
+    ax.plot(logxx, yyb/norm, "--", color="r", linewidth=linewidth,
+            label="vdB+16 (clusters), Amorisco+16")
 
-    yybest = udg_powerlaw(xx, *popt)
-    ax.plot(np.log10(xx), yybest, "--", color="r", linewidth=1.4, label="Best Fit")
+    yya = udg_powerlaw(xx, -2.71, popt[1])
+    norm = simps(yya, logxx)
+    ax.plot(logxx, yya/norm, "--", color="dodgerblue", linewidth=linewidth,
+            label="vdB+17 (groups)")
 
     ax.set_yscale("log")
+
+    result = rf"{popt[0]:.2f}\pm{np.sqrt(pcov[0][0]):.2f}"
+    s = r"$n\mathrm{[dex^{-1}]}\propto\hat{r}_{e}^{%s}$" % result
+
+    ax.text(0.1, 0.25, s, transform=ax.transAxes, color="k", fontsize=fontsize+1)
 
     ax.legend(loc="upper right", fontsize=fontsize-3)
     ax.set_xlabel(r"$\log_{10}\ \hat{r}_{e}\ \mathrm{[kpc]}$", fontsize=fontsize)

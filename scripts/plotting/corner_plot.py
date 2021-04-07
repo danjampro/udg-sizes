@@ -60,7 +60,7 @@ def marginal_likelihood_plot(ax, values, weights, range=None, bins=10, fontsize=
 
 if __name__ == "__main__":
 
-    SAVE = True
+    SAVEFIG = True
     CONFLINEKWARGS = {"linewidth": 1.3, "color": "springgreen", "linestyle": "--"}
     FONTSIZE = 14
 
@@ -92,8 +92,8 @@ if __name__ == "__main__":
     ax2 = fig.add_subplot(spec[3:10, 7:10])
 
     # Likelihood heatmap
-    # threshold_plot(x=x, y=y, z=z, ax=ax0, xrange=xrange, yrange=yrange, smooth=0.5)
-    grid.plot_2d_hist(xkey, ykey, metric=zkey, xrange=xrange, yrange=yrange,  ax=ax0, smooth=0.7)
+    threshold_plot(x=x, y=y, z=z, ax=ax0, xrange=xrange, yrange=yrange, smooth=0.5)
+    # grid.plot_2d_hist(xkey, ykey, metric=zkey, xrange=xrange, yrange=yrange,  ax=ax0, smooth=0.5)
 
     # Marginal likelihood hists
     m1, s1 = marginal_likelihood_plot(ax1, x, z, range=xrange, weights_no_prior=znoprior)
@@ -130,7 +130,7 @@ if __name__ == "__main__":
     bbox_to_anchor = (1.005, 0.9)
     ax1.legend(fontsize=FONTSIZE-2.5, bbox_to_anchor=bbox_to_anchor)
 
-    if SAVE:
+    if SAVEFIG:
         config = get_config()
         image_dir = os.path.join(config["directories"]["data"], "images")
         image_filename = os.path.join(image_dir, f"corner_plot_{model_name}.png")
