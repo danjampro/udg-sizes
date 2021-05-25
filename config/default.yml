@@ -113,9 +113,12 @@ models:
           max: 1
           step: 0.2
 
+  # Fiducial model
   blue_sedgwick_shen_0.35:
     base: blue_sedgwick_shen
 
+  # Colour distribution tests
+  # NOTE: Changing the colour distribution from this config is not supported yet
   blue_sedgwick_shen_0.40:
     base: blue_sedgwick_shen
 
@@ -125,6 +128,11 @@ models:
   blue_sedgwick_shen_colour:
     base: blue_sedgwick_shen
     type: udgsizes.model.sm_size_colour.Model
+
+  # Mass kink parameter tests
+  blue_sedgwick_shen_highkink:
+    base: blue_sedgwick_shen
+    logmstar_kink: 10
 
   blue_sedgwick_shen_udg:
     base: blue_sedgwick_shen

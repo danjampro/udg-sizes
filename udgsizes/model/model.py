@@ -16,10 +16,7 @@ from udgsizes.obs.index_colour import load_classifier
 from udgsizes.utils.mstar import EmpiricalSBCalculator
 from udgsizes.model.utils import get_model_config
 
-PARS_SKIP = ("index", "colour_rest", "colour_rest_offset")
-
-# Define the mean colour offset used to shift observed colours to rest-frame colours
-COLOUR_OFFSET = 0.056  # mag
+PARS_SKIP = ("colour_rest", "colour_rest_offset")
 
 
 # Define this here so the model is pickleable
@@ -66,15 +63,14 @@ class ModelBase(UdgSizesBase):
 
             self._likelihood_funcs[par_name] = func
 
-        # Load the recovery efficiency function
-        self._recovery_efficiency = load_recovery_efficiency(config=self.config)
-
-        #
         self._colour_classifier = load_classifier(config=self.config)
         self._colour_index_likelihood = self._colour_classifier.vars["blue"].pdf
 
         self._kcorrector = EmpiricalKCorrector(config=self.config, logger=self.logger)
         self._sb_calculator = EmpiricalSBCalculator(config=self.config, logger=self.logger)
+
+        # Load the recovery efficiency function
+        self._recovery_efficiency = load_recovery_efficiency(config=self.config)
 
         # Prepare the sampler
         self._sampler = Sampler(par_names=self._par_order, config=self.config, logger=self.logger)
@@ -94,11 +90,6 @@ class ModelBase(UdgSizesBase):
 
     # Public methods
 
-    def sample(self, n_samples, hyper_params, filename=None, **kwargs):
-        """ Sample the model, returning a pd.DataFrame containing the posterior distribution.
-        """
-        raise NotImplementedError
-
     def get_uae_phys(self, logmstar, rec, redshift, colour_rest):
         """ Override method to use empirical fit to ML ratio.
         """
@@ -117,11 +108,6 @@ class ModelBase(UdgSizesBase):
 
     # Model likelihood
 
-    def _log_likelihood(self, state, rec_params, uae_params):
-        """ The log-likelihood for the full model.
-        """
-        raise NotImplementedError
-
     def _log_likelihood_redshift(self, redshift):
         """ Calculate the contribution to the likelihood from the redshift.
         """
@@ -131,37 +117,13 @@ class ModelBase(UdgSizesBase):
             return -np.inf
         return np.log(self._likelihood_funcs["redshift"](redshift))
 
-    def _log_likelihood_recovery(self, *args, **kwargs):
-        """ Calculate the contribution to the likelihood from the recovery efficiency.
-        """
-        raise NotImplementedError
-
-    def _log_likelihood_index_colour(self, colour_rest, index, redshift):
-        """
-        """
-        kgr = self.get_kcorr_gr(colour_rest, redshift=redshift)
-        colour_proj = colour_rest + kgr
-
-        # Apply late-type galaxy selection criteria
-        if index >= 2.5:
-            return -np.inf
-
-        # TODO: Streamline
-        _index = np.array([index])
-        _colour_proj = np.array([colour_proj])
-
-        # Return zero-likelihood if the sample does not satisfy selection criteria
-        if not self._colour_classifier.predict(_index, colours=_colour_proj, which="blue")[0]:
-            return -np.inf
-
-        # TODO: Offset rest colour
-
-        return np.log(self._colour_index_likelihood([index, colour_rest + COLOUR_OFFSET]))
-
     # Private methods
 
     def _get_par_config(self, par_name, par_type):
         """ Convenience function to get parameter config.
+        Args:
+            par_name (str): The parameter name.
+            par_type (str): The parameter type.
         """
         return self._par_configs[par_name][par_type]
 

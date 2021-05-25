@@ -9,7 +9,8 @@ if __name__ == "__main__":
     burnin = 250
     ignore_recov = False
 
-    model_name = "blue_sedgwick_shen"
+    model_name = "blue_sedgwick_shen_highkink"
+
     model = create_model(model_name, ignore_recov=ignore_recov)
     hyper_params = {"rec_phys_offset": {"alpha": 0.4}, "logmstar": {"a": -1.45}}
     df = model.sample(burnin=burnin, n_samples=n_samples, hyper_params=hyper_params)

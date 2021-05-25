@@ -5,11 +5,11 @@ from udgsizes.fitting.grid import ParameterGrid
 
 MAKEPLOTS = True
 CHECK_INITIAL_VALUES = False
-SAMPLE = False
+SAMPLE = True
 
 if __name__ == "__main__":
 
-    model_name = "blue_sedgwick_shen"
+    model_name = "blue_sedgwick_shen_highkink"
     model_type = "udgsizes.model.sm_size.Model"
 
     config = get_config()

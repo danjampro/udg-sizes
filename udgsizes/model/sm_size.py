@@ -21,17 +21,32 @@ class Model(ModelBase):
         self._ignore_recov = ignore_recov
         super().__init__(*args, **kwargs)
 
+        # Specify the k-corrector
         self._kcorrector = KCorrector(config=self.config, logger=self.logger)
 
+        # Specify the colour model
         self._colour_model = EmpiricalColourModel(config=self.config, logger=self.logger)
 
+        # Model hyper parameters
+        self._logmstar_kink = self.model_config.get("logmstar_kink", 9)
+        self.logger.debug(f"Kink mass: {self._logmstar_kink}")
+
     def sample(self, n_samples, hyper_params, filename=None, **kwargs):
-        """ Sample the model, returning a pd.DataFrame containing the posterior distribution.
+        """ Sample the model, returning the model samples.
+        Args:
+            n_samples (int): The number of samples.
+            hyper_params (dict): The set of model hyper params.
+            filename (str, optional): The filename in which to save model samples.
+        Returns:
+            pd.DataFrame: The model samples.
         """
+        # Get the initial state for each walker
         initial_state = self._get_initial_state(hyper_params=hyper_params)
 
+        # Define the likelihood function
         log_likelihood = partial(self._log_likelihood, hyper_params=hyper_params)
 
+        # Do the sampling
         df = self._sampler.sample(func=log_likelihood, n_samples=n_samples,
                                   initial_state=initial_state, **kwargs)
 
@@ -44,7 +59,7 @@ class Model(ModelBase):
             df['uae_obs_jig'], df['rec_obs_jig'], df["selected_jig"] = self._jiggler.jiggle(
                 uae=df['uae_obs'].values, rec=df['rec_obs'].values)
 
-        # Save to file if filename is given
+        # Save samples to file
         if filename is not None:
             self.logger.debug(f"Saving model samples to: {filename}.")
             df.to_csv(filename)
@@ -54,16 +69,25 @@ class Model(ModelBase):
     # Model likelihood
 
     def _log_likelihood(self, state, hyper_params):
-        """ The log-likelihood for the full model.
+        """ Calculate the model log-likelihood.
+        Args:
+            state (tuple): The state tuple.
+            hyper_params (dict): The model hyper parameters.
+        Returns:
+            float: The log-likelihood.
         """
+        # Unpack the state
         rec_phys_offset, logmstar, redshift, colour_rest_offset = state
 
+        # Calculate the physical effective radius
         rec_phys_mean = self._mean_rec_phys(logmstar, **hyper_params['rec_phys_offset'])
         rec_phys = shen.apply_rec_offset(rec_phys_mean, rec_phys_offset)
 
+        # Calculate the rest-frame colour
         colour_rest_mean = self._colour_model.get_mean_colour_rest(logmstar)
         colour_rest = colour_rest_mean + colour_rest_offset
 
+        # Calculate the log-likelihood
         ll = (self._log_likelihood_rec_phys_offset(rec_phys_offset, logmstar=logmstar)
               + self._log_likelihood_logmstar(logmstar, **hyper_params['logmstar'])
               + self._log_likelihood_colour_rest_offset(colour_rest_offset)
@@ -72,6 +96,7 @@ class Model(ModelBase):
         if not np.isfinite(ll):
             return -np.inf
 
+        # Apply the recovery fraction to the LL
         if not self._ignore_recov:
             with np.errstate(divide='ignore'):  # Silence warnings
                 ll += self._log_likelihood_recovery(logmstar, rec_phys, redshift, colour_rest)
@@ -82,21 +107,43 @@ class Model(ModelBase):
         return ll
 
     def _log_likelihood_rec_phys_offset(self, rec_phys_offset, logmstar):
-        """
+        """ Calculate the log-likelihood term for the physical effective radius.
+        Args:
+            rec_phys_offset (float): The size offset from the mean relation at this stellar mass.
+            logmstar (float): The log10 stellar mass.
+        Returns:
+            float: The log-likelihood.
         """
         return np.log(self._likelihood_funcs["rec_phys_offset"](rec_phys_offset, logmstar=logmstar))
 
     def _log_likelihood_logmstar(self, logmstar, *args, **kwargs):
-        """ Calculate the contribution to the likelihood from the stellar mass. """
+        """ Calculate the log-likelihood term for the stellar mass.
+        Args:
+            logmstar (float): The log10 stellar mass.
+            *args, **kwargs: Parsed to configured likelihood function.
+        Returns:
+            float: The log-likelihood.
+        """
         return np.log(self._likelihood_funcs["logmstar"](logmstar, *args, **kwargs))
 
     def _log_likelihood_colour_rest_offset(self, colour_rest_offset):
-        """
+        """ Calculate the log-likelihood term for the rest frame colour.
+        Args:
+            colour_rest_offset (float): The offset from the mean colour trend in mags.
+        Returns:
+            float: The log-likelihood.
         """
         return np.log(self._colour_model.offset_pdf(colour_rest_offset))
 
     def _log_likelihood_recovery(self, logmstar, rec_phys, redshift, colour_rest):
-        """ Calculate the contribution to the likelihood from the recovery efficiency.
+        """ Calculate the log-likelihood term for the recovery fraction.
+        Args:
+            logmstar (float): The log10 stellar mass.
+            rec_phys (float): The physical circularised effective radius.
+            redshift (float): The redshift.
+            colour_rest (float): The rest frame colour.
+        Returns:
+            float: The log-likelihood.
         """
         # Apply colour selection function
         colour_obs = colour_rest + self.get_kcorr_gr(colour_rest, redshift)
@@ -160,13 +207,13 @@ class Model(ModelBase):
 
         return df
 
-    def _mean_rec_phys(self, logmstar, alpha, logmstar_kink=9):
+    def _mean_rec_phys(self, logmstar, alpha):
         """ Return the mean circularised effective radius for this stellar mass. """
-        if logmstar > logmstar_kink:
+        if logmstar > self._logmstar_kink:
             return shen.logmstar_to_mean_rec(logmstar)
         else:
             # Calculate the normalisation term
-            gamma = shen.GAMMA * (10 ** logmstar_kink) ** (shen.ALPHA - alpha)
+            gamma = shen.GAMMA * (10 ** self._logmstar_kink) ** (shen.ALPHA - alpha)
             # Return power law
             return gamma * (10 ** logmstar) ** alpha
 
