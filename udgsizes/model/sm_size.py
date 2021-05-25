@@ -1,15 +1,11 @@
 from functools import partial
-from multiprocessing import Pool
 import numpy as np
-
-from scipy.integrate import tplquad
 
 from udgsizes.model.model import ModelBase
 from udgsizes.utils.cosmology import kpc_to_arcsec
 from udgsizes.utils import shen
 from udgsizes.utils.selection import GR_MAX, GR_MIN
 from udgsizes.model.colour import EmpiricalColourModel
-# from udgsizes.model.kcorrector import EmpiricalKCorrector as KCorrector
 from udgsizes.model.kcorrector import GamaKCorrector as KCorrector
 
 
@@ -208,68 +204,21 @@ class Model(ModelBase):
         return df
 
     def _mean_rec_phys(self, logmstar, alpha):
-        """ Return the mean circularised effective radius for this stellar mass. """
+        """ Return the mean circularised effective radius for this stellar mass.
+        Args:
+            logmstar (float): The log10 stellar mass.
+            alpha (float): The power-law slope.
+        Returns:
+            float: The mean value of effective radius at the given stellar mass.
+        """
         if logmstar > self._logmstar_kink:
             return shen.logmstar_to_mean_rec(logmstar)
         else:
             # Calculate the normalisation term
             gamma = shen.GAMMA * (10 ** self._logmstar_kink) ** (shen.ALPHA - alpha)
+
             # Return power law
             return gamma * (10 ** logmstar) ** alpha
-
-    def integrand(self, logmstar, rec_phys_offset, colour_rest_offset, redshift, hyper_params):
-        """
-        """
-        rec_phys_mean = self._mean_rec_phys(logmstar, **hyper_params['rec_phys_offset'])
-        rec_phys = shen.apply_rec_offset(rec_phys_mean, rec_phys_offset)
-        colour_rest_mean = self._colour_model.get_mean_colour_rest(logmstar)
-        colour_rest = colour_rest_mean + colour_rest_offset
-
-        # print(logmstar, rec_phys, colour_rest, redshift)
-
-        a = self._log_likelihood_logmstar(logmstar=logmstar, **hyper_params['logmstar'])
-        b = self._log_likelihood_redshift(redshift)
-        c = self._log_likelihood_rec_phys_offset(rec_phys_offset, logmstar=logmstar)
-        d = self._log_likelihood_colour_rest_offset(colour_rest_offset)
-        e = self._log_likelihood_recovery(logmstar, rec_phys, redshift, colour_rest)
-
-        result = np.exp(sum([a, b, c, d, e]))
-        if not np.isfinite(result):
-            return 0
-        return result
-
-    def marginal_logmstar(self, logmstar_min, logmstar_max, n_samples, hyper_params, nproc=1,
-                          **kwargs):
-        """
-        """
-        logmstar = np.linspace(logmstar_min, logmstar_max, n_samples)
-        func = partial(self._marginal_logmstar, hyper_params=hyper_params, **kwargs)
-
-        if nproc == 1:
-            result = np.array([func(lm) for lm in logmstar])
-        else:
-            with Pool(nproc) as pool:
-                result = np.array(pool.map(func, logmstar))
-
-        return logmstar, result
-
-    def _marginal_logmstar(self, logmstar, hyper_params, epsabs=0, epsrel=1E-3):
-        """
-        """
-        lims_rec_phys_offset = -3., 3.
-        lims_colour_rest_offset = -1., 1.
-        lims_redshift = 0.0001, 0.5
-
-        def integrand(rec_phys_offset, colour_rest_offset, redshift):
-            return self.integrand(logmstar, rec_phys_offset, colour_rest_offset, redshift=redshift,
-                                  hyper_params=hyper_params)
-
-        # For some reason the limits go the other way around
-        lims = [*lims_rec_phys_offset, *lims_colour_rest_offset, *lims_redshift][::-1]
-
-        integral = tplquad(integrand, *lims, epsabs=epsabs, epsrel=epsrel)[0]
-
-        return integral
 
 
 class UDGModel(Model):
@@ -278,7 +227,12 @@ class UDGModel(Model):
         super().__init__(*args, **kwargs)
 
     def _log_likelihood(self, state, hyper_params):
-        """ The log-likelihood for the full model.
+        """ Calculate the model log-likelihood.
+        Args:
+            state (tuple): The state tuple.
+            hyper_params (dict): The model hyper parameters.
+        Returns:
+            float: The log-likelihood.
         """
         rec_phys_offset, logmstar, redshift, colour_rest_offset = state
 
