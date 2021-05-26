@@ -18,4 +18,4 @@ def power_trunc(rec_phys, alpha, r_trunc, min=0):
 
 def gaussian_offset_shen(offset, logmstar):
     sigma = shen.logmstar_sigma(logmstar)
-    return unnormalised_gaussian_pdf(offset, sigma)
+    return unnormalised_gaussian_pdf(offset, sigma=sigma)

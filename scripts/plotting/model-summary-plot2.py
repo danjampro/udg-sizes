@@ -47,7 +47,7 @@ def plot_best_samples(grid, ax_dict, q=0.9):
     for df in grid.load_confident_samples(q=q, metric=METRIC):
 
         # Apply selection
-        df = df[df["selected_jig"].values == 1].reset_index(drop=True)
+        df = df[df["selected"].values == 1].reset_index(drop=True)
 
         for key in PAR_NAMES:
             values = df[key].values
@@ -67,7 +67,6 @@ def plot_best_sample(grid, ax_dict, linewidth=1.5, color="k"):
     """
     """
     df = grid.load_best_sample(select=True, metric=METRIC)
-    df = df[df["selected_jig"].values == 1].reset_index(drop=True)
 
     for key, ax in ax_dict.items():
 

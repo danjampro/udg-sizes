@@ -11,9 +11,9 @@ class Model(SmSizeModel):
     def sample(self, n_samples, hyper_params, filename=None, **kwargs):
         """
         """
-        # Create the colour model from hyper params
+        # Override the colour model using model hyper params
         self._colour_model = EmpiricalColourModel(config=self.config, logger=self.logger,
-                                                  **hyper_params["colour"])
+                                                  **hyper_params["colour_model"])
         # Sample using base class method
         return super().sample(n_samples=n_samples, hyper_params=hyper_params, filename=filename,
                               **kwargs)

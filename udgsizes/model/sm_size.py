@@ -21,7 +21,9 @@ class Model(ModelBase):
         self._kcorrector = KCorrector(config=self.config, logger=self.logger)
 
         # Specify the colour model
-        self._colour_model = EmpiricalColourModel(config=self.config, logger=self.logger)
+        cm_kwargs = self.model_config.get("colour_model", {})
+        self._colour_model = EmpiricalColourModel(config=self.config, logger=self.logger,
+                                                  **cm_kwargs)
 
         # Model hyper parameters
         self._logmstar_kink = self.model_config.get("logmstar_kink", 9)

@@ -16,7 +16,8 @@ from udgsizes.obs.index_colour import load_classifier
 from udgsizes.utils.mstar import EmpiricalSBCalculator
 from udgsizes.model.utils import get_model_config
 
-PARS_SKIP = ("colour_rest", "colour_rest_offset")
+PARS_SKIP = ("index", "colour_rest", "colour_rest_offset")
+# PARS_SKIP = ("colour_rest", "colour_rest_offset")
 
 
 # Define this here so the model is pickleable
@@ -180,7 +181,8 @@ class ModelBase(UdgSizesBase):
 
         if not self._sampler.validate_inital_state(inivals):
             if retry_index >= n_retries:
-                raise RuntimeError("Invalid initial state after max retries reached.")
+                raise RuntimeError("Invalid initial state after max retries reached for hyper"
+                                   f" params: {hyper_params}")
 
             # Try again!
             self.logger.warning("Initial state invalid. Retrying.")

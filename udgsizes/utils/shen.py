@@ -15,6 +15,13 @@ def logmstar_to_mean_rec(logmstar):
 
 
 def logmstar_sigma(logmstar):
+    """ Return the natural log-normal dispersion parameter in the stellar mass - size relation.
+    Equation 19 from Shen et al. (2003).
+    Args:
+        logmstar (float): The log10 stellar mass.
+    Returns:
+        float: The dispersion parameter.
+    """
     mstar = 10 ** logmstar
     norm = 1 + (mstar / M0) ** 2
     return SIGMA_2 + (SIGMA_1 - SIGMA_2) / norm

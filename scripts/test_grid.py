@@ -4,8 +4,8 @@ from udgsizes.core import get_config
 from udgsizes.fitting.grid import ParameterGrid
 
 MAKEPLOTS = True
-CHECK_INITIAL_VALUES = False
-SAMPLE = True
+CHECK_INITIAL_VALUES = True
+SAMPLE = False
 
 if __name__ == "__main__":
 
@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     grid = ParameterGrid(model_name, config=config)
 
-    if SAMPLE and CHECK_INITIAL_VALUES:
+    if CHECK_INITIAL_VALUES:
         grid.check_initial_values()
 
     if SAMPLE:

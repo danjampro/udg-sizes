@@ -11,10 +11,8 @@ from udgsizes.base import UdgSizesBase
 from udgsizes.utils.stats.likelihood import unnormalised_gaussian_pdf
 from udgsizes.obs.sample import load_gama_masses, load_leisman_udgs
 
-# TODO: Move these to model config
-COLOUR_MEAS_ERROR = 0.06  # Fiducial colour measurement error from GAMA
-# COLOUR_MIN = 0.35  # Minimum average rest frame colour based on known late type dwarfs
-COLOUR_MIN = 0.35
+# Approximate measurement uncertainty for GAMA colours [mag]
+GAMA_COLOUR_ERR = 0.1
 
 
 class ColourModel(UdgSizesBase):
@@ -33,8 +31,8 @@ def clipped_std(data):
 
 class EmpiricalColourModel(ColourModel):
 
-    def __init__(self, bins=9, logmstar_min=6.5, logmstar_max=11, lambdar=True, use_leisman=False,
-                 colour_min=COLOUR_MIN, **kwargs):
+    def __init__(self, bins=20, logmstar_min=6.5, logmstar_max=11, lambdar=True, use_leisman=False,
+                 colour_min=None, **kwargs):
         super().__init__(**kwargs)
 
         self._lambdar = lambdar
@@ -42,6 +40,7 @@ class EmpiricalColourModel(ColourModel):
         if colour_min is None:
             colour_min = -np.inf
         self._colour_min = float(colour_min)
+        self.logger.debug(f"Minimum mean colour: {self._colour_min:.2f}")
 
         dfg = load_gama_masses(lambdar=self._lambdar)
         colour = dfg["gr"].values
@@ -64,13 +63,15 @@ class EmpiricalColourModel(ColourModel):
             cond_fit[self._cond_leisman] = False
 
         histkwargs = {"bins": bins, "range": (logmstar_min, logmstar_max)}
+
         self._means, edges, _ = binned_statistic(self._logmstar[cond_fit], self._colour[cond_fit],
                                                  statistic=clipped_median, **histkwargs)
         self._stds, edges, _ = binned_statistic(self._logmstar[cond_fit], self._colour[cond_fit],
                                                 statistic=clipped_std, **histkwargs)
 
         # Calculate intrinsic dispersion given total and measurement error
-        self.sigma = np.sqrt(self._stds.mean() ** 2 - COLOUR_MEAS_ERROR ** 2)
+        # NOTE: Small correction for GAMA measurement uncertainty
+        self.sigma = np.sqrt(self._stds.mean() ** 2 - GAMA_COLOUR_ERR ** 2)
 
         self._centres = 0.5 * (edges[1:] + edges[:-1])
 
@@ -83,7 +84,7 @@ class EmpiricalColourModel(ColourModel):
         colour = self._interp(logmstar)
         return max(colour, self._colour_min)
 
-    def summary_plot(self):
+    def summary_plot(self, sample=True):
         """
         """
         df = load_gama_masses(lambdar=self._lambdar)
@@ -108,5 +109,11 @@ class EmpiricalColourModel(ColourModel):
 
         ax.set_xlim(6, 12)
         ax.set_ylim(-0.1, 1)
+
+        if sample:
+            xx = np.random.uniform(6, 11, self._logmstar.size)
+            yy0 = np.array([self.get_mean_colour_rest(_) for _ in xx])
+            yy = np.random.normal(yy0, self.sigma)
+            ax.plot(xx, yy, "ko", markersize=0.5, color="deepskyblue")
 
         plt.show(block=False)

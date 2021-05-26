@@ -96,6 +96,8 @@ models:
           min: -2.0
           max: 2.0
           step: 0.05
+    colour_model:
+      colour_min: 0.35
 
   blue_sedgwick_shen:
     base: blue_baldry_shen
@@ -116,14 +118,20 @@ models:
   # Fiducial model
   blue_sedgwick_shen_0.35:
     base: blue_sedgwick_shen
+    colour_model:
+      colour_min: 0.35
 
   # Colour distribution tests
   # NOTE: Changing the colour distribution from this config is not supported yet
   blue_sedgwick_shen_0.40:
     base: blue_sedgwick_shen
+    colour_model:
+      colour_min: 0.40
 
   blue_sedgwick_shen_0.42:
     base: blue_sedgwick_shen
+    colour_model:
+      colour_min: 0.42
 
   blue_sedgwick_shen_colour:
     base: blue_sedgwick_shen
@@ -174,7 +182,7 @@ grid:
           min: -1.65
           max: -1.25
           step: 0.05
-      colour:
+      colour_model:
         colour_min:
           min: 0.3
           max: 0.4

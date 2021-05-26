@@ -16,7 +16,7 @@ def unlog_likelihood(log_values):
 def unnormalised_gaussian_pdf(value, sigma):
     """
     """
-    return np.exp(-0.5 * (value / sigma)**2)
+    return np.exp(-0.5 * (value / sigma) ** 2)
 
 
 def gaussian(x, a, mu, sigma):
