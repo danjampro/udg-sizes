@@ -12,8 +12,7 @@ if __name__ == "__main__":
     model_name = "blue_sedgwick_shen"
 
     model = create_model(model_name, ignore_recov=ignore_recov)
-    hyper_params = {'rec_phys_offset': {'alpha': 0.3},
-                    'logmstar': {'a': -1.4500000000000006}}
+    hyper_params = {'rec_phys_offset': {'alpha': 0.375}, 'logmstar': {'a': -1.4750000000000003}}
     # hyper_params = {'rec_phys_offset': {'alpha': 0.4}, 'logmstar': {'a': -1.45}}
 
     df = model.sample(burnin=burnin, n_samples=n_samples, hyper_params=hyper_params)

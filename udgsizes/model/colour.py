@@ -12,7 +12,7 @@ from udgsizes.utils.stats.likelihood import unnormalised_gaussian_pdf
 from udgsizes.obs.sample import load_gama_masses, load_leisman_udgs
 
 # Approximate measurement uncertainty for GAMA colours [mag]
-GAMA_COLOUR_ERR = 0.1
+GAMA_COLOUR_ERR = 0.08
 
 
 class ColourModel(UdgSizesBase):

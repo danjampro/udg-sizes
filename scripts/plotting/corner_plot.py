@@ -64,7 +64,7 @@ if __name__ == "__main__":
     CONFLINEKWARGS = {"linewidth": 1.3, "color": "springgreen", "linestyle": "--"}
     FONTSIZE = 14
 
-    model_name = "blue_sedgwick_shen_0.35"
+    model_name = "blue_sedgwick_shen_final"
     xkey = "rec_phys_offset_alpha"
     ykey = "logmstar_a"
     zkey_noprior = "likelihood_kde_3d"

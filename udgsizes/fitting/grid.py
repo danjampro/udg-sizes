@@ -410,7 +410,7 @@ class ParameterGrid(UdgSizesBase):
                 result.append(param_dict[qname][parname])
         return result
 
-    def _get_best_index(self, metric=None, df=None, kstest_min=0.1, func=np.nanargmax):
+    def _get_best_index(self, metric=None, df=None, kstest_min=None, func=np.nanargmax):
         """
         """
         if metric is None:

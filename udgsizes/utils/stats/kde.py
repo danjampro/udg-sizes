@@ -154,6 +154,13 @@ class TransformedKDE():
     def evaluate(self, df, **kwargs):
         """
         """
+        points = self.rescale_observations(df, **kwargs)
+
+        return self.kde.pdf(points)
+
+    def rescale_observations(self, df, **kwargs):
+        """
+        """
         values = {}
         for k in self.keys:
             ko = self.keys_obs[k]
@@ -162,19 +169,9 @@ class TransformedKDE():
             values[k], _, _, _ = scale_to_gaussian(df, key=ko, factor=factor, xmin=self.mins[k],
                                                    xmax=self.maxs[k], lmbda=self.lambdas[k],
                                                    **kwargs)
-        points = np.vstack([values[k] for k in self.keys])
+        return np.vstack([values[k] for k in self.keys])
 
-        return self.kde.pdf(points)
-
-    def rescale_observations(self, df, key, **kwargs):
-        """
-        """
-        ko = self.keys_obs[key]
-        factor = self.factors.get(key, 1)
-        return scale_to_gaussian(df, key=ko, factor=factor, xmin=self.mins[key],
-                                 xmax=self.maxs[key], lmbda=self.lambdas[key], **kwargs)[0]
-
-    def summary_plot(self):
+    def summary_plot(self, dfo=None):
         """
         """
         # Create a regular 3D grid with 50 points in each dimension
@@ -184,12 +181,25 @@ class TransformedKDE():
 
         # Evaluate the KDE on a regular grid...
         coords = np.vstack([item.ravel() for item in [xi, yi, zi]])
-        print(coords.shape)
         density = self.kde(coords).reshape((10, 10, 10))
 
+        axes = {}
+
         plt.figure(figsize=(12, 4))
+
         for i, key in enumerate(self.keys):
-            ax = plt.subplot(1, len(self.keys), i + 1)
-            ax.imshow(density.sum(axis=i), origin="lower", cmap="binary")
+            idxs = [_ for _ in range(len(self.keys)) if _ != i]
+            extent = (coords[idxs[1]].min(), coords[idxs[1]].max(),
+                      coords[idxs[0]].min(), coords[idxs[0]].max())
+
+            axes[i] = plt.subplot(1, len(self.keys), i + 1)
+            axes[i].imshow(density.sum(axis=i), origin="lower", cmap="binary",
+                           extent=extent)
+
+        if dfo is not None:
+            points = self.rescale_observations(dfo)
+            for i, key in enumerate(self.keys):
+                idxs = [_ for _ in range(len(self.keys)) if _ != i]
+                axes[i].plot(points[idxs[1]], points[idxs[0]], "bo", markersize=1)
 
         plt.show(block=False)
