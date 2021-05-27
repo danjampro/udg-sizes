@@ -12,7 +12,7 @@ from udgsizes.utils.stats.likelihood import unnormalised_gaussian_pdf
 from udgsizes.obs.sample import load_gama_masses, load_leisman_udgs
 
 # Approximate measurement uncertainty for GAMA colours [mag]
-GAMA_COLOUR_ERR = 0.08
+GAMA_COLOUR_ERR = 0.075
 
 
 class ColourModel(UdgSizesBase):
@@ -111,7 +111,7 @@ class EmpiricalColourModel(ColourModel):
         ax.set_ylim(-0.1, 1)
 
         if sample:
-            xx = np.random.uniform(6, 11, self._logmstar.size)
+            xx = np.random.uniform(8, 11, self._logmstar.size)
             yy0 = np.array([self.get_mean_colour_rest(_) for _ in xx])
             yy = np.random.normal(yy0, self.sigma)
             ax.plot(xx, yy, "ko", markersize=0.5, color="deepskyblue")
