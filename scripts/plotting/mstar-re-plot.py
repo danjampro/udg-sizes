@@ -25,6 +25,9 @@ MODEL_NAME = "blue_sedgwick_shen_final"
 
 SAVEFIG = True
 
+SYS_ERR_BETA = 0.05  # Systematic error not incorporated into model uncertainty
+# e.g. from colour model uncertainty
+
 
 def calculate_rec(logmstar, alpha, model):
     func = model._mean_rec_phys
@@ -130,6 +133,8 @@ if __name__ == "__main__":
     model = Model(model_name=MODEL_NAME)
 
     alpha_mean, alpha_std = grid.parameter_stats("rec_phys_offset_alpha")
+
+    alpha_std = np.sqrt(alpha_std ** 2 + SYS_ERR_BETA ** 2)
 
     # fig, ax = plt.subplots(figsize=(9, 6))
     fig, ax = plt.subplots(figsize=(12, 6))

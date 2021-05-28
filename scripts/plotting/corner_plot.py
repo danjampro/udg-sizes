@@ -81,9 +81,10 @@ if __name__ == "__main__":
     znoprior = df[zkey_noprior].values
     z = df[zkey].values
 
+    xrange = x.min(), 0.7
+    yrange = -1.675, -1.225
     # xrange = x.min(), x.max()
-    xrange = x.min(), x.max()
-    yrange = y.min(), y.max()
+    # yrange = y.min(), y.max()
 
     fig = plt.figure(figsize=(7, 7))
     spec = GridSpec(ncols=10, nrows=10, figure=fig)

@@ -6,11 +6,11 @@ from udgsizes.fitting.grid import ParameterGrid
 from udgsizes.obs.sample import load_sample
 from udgsizes.utils.selection import GR_MIN, GR_MAX
 
-MODEL_NAME = "blue_sedgwick_shen_0.35"
+MODEL_NAME = "blue_sedgwick_shen"
 SAVEFIG = True
 FONTSIZE = 14
 BINS_OBS = 10
-BINS_MODEL = 20
+BINS_MODEL = 30
 METRIC = "posterior_kde_3d"
 PAR_NAMES = "logmstar", "redshift", "rec_phys", "uae_obs_jig", "rec_obs_jig", "colour_obs"
 
@@ -37,14 +37,20 @@ KSTEST_KEYS = {"uae_obs_jig": "kstest_uae_obs_jig",
                "colour_obs": "kstest_colour_obs"}
 
 
-def plot_best_samples(grid, ax_dict, q=0.9):
+def get_best_samples(grid, q=0.9):
+    """
+    """
+    return grid.load_confident_samples(q=q, metric=METRIC)
+
+
+def plot_best_samples(dfs, ax_dict, q=0.9):
     """
     """
     mins = {_: np.ones(BINS_MODEL) * np.inf for _ in PAR_NAMES}
     maxs = {_: np.ones(BINS_MODEL) * -np.inf for _ in PAR_NAMES}
     centres = {}
 
-    for df in grid.load_confident_samples(q=q, metric=METRIC):
+    for df in dfs:
 
         # Apply selection
         df = df[df["selected"].values == 1].reset_index(drop=True)
@@ -80,8 +86,11 @@ def plot_best_sample(grid, ax_dict, linewidth=1.5, color="k"):
 def plot_observations(grid, ax_dict, color="b"):
     """
     """
-    metrics = grid.get_best_metrics(metric=METRIC)
     dfo = load_sample(select=True)
+
+    # Find the good-fitting model with the best ks-statistics
+    dfm = grid.load_confident_metrics()
+    metrics = dfm.iloc[np.argmax(dfm["kstest_min"])]
 
     for key, ax in ax_dict.items():
         if key in OBSKEYS:
@@ -123,6 +132,7 @@ if __name__ == "__main__":
         ax_dict[key].set_xlabel(LABELS[key], fontsize=FONTSIZE)
         ax_dict[key].axes.yaxis.set_ticklabels([])
 
+    dfs = get_best_samples(grid)
     plot_best_samples(grid, ax_dict)
 
     plot_best_sample(grid, ax_dict)

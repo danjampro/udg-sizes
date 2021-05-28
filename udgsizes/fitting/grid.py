@@ -162,6 +162,7 @@ class ParameterGrid(UdgSizesBase):
         """
         """
         df = load_metrics(self.model_name, config=self.config)
+        df["grid_idx"] = np.arange(df.shape[0])
 
         # TODO: Move to metrics
         for col in df.columns:
@@ -410,7 +411,7 @@ class ParameterGrid(UdgSizesBase):
                 result.append(param_dict[qname][parname])
         return result
 
-    def _get_best_index(self, metric=None, df=None, kstest_min=None, func=np.nanargmax):
+    def _get_best_index(self, metric=None, df=None, kstest_min=0.1, func=np.nanargmax):
         """
         """
         if metric is None:
