@@ -54,7 +54,7 @@ class ParameterGrid(UdgSizesBase):
         model_class = get_model_config(model_name, config=self.config)["type"]
 
         # Setup the directory to store model samples
-        self._datadir = _get_datadir(model_name=self.model_name, config=self.config)
+        self.directory = _get_datadir(model_name=self.model_name, config=self.config)
         self._metric_filename = _get_metric_filename(self.model_name, config=self.config)
 
         self._grid_config = self.config["grid"][model_class]
@@ -119,7 +119,7 @@ class ParameterGrid(UdgSizesBase):
 
         self.logger.debug("Finished sampling parameter grid.")
 
-    def evaluate(self, nproc=None, save=True, **kwargs):
+    def evaluate(self, nproc=None, save=True, filename=None, **kwargs):
         """
         """
         if nproc is None:
@@ -132,8 +132,9 @@ class ParameterGrid(UdgSizesBase):
 
         df = pd.concat(result, axis=1).T
         if save:
-            self.logger.debug(f"Saving metrics to {self._metric_filename}.")
-            df.to_csv(self._metric_filename)
+            filename = self._metric_filename if filename is None else filename
+            self.logger.debug(f"Saving metrics to {filename}.")
+            df.to_csv(filename)
 
         return df
 
@@ -375,20 +376,20 @@ class ParameterGrid(UdgSizesBase):
     def _setup_datadir(self, overwrite):
         """
         """
-        if os.path.isdir(self._datadir):
+        if os.path.isdir(self.directory):
             if not overwrite:
-                raise FileExistsError(f"Grid directory already exists: {self._datadir}."
+                raise FileExistsError(f"Grid directory already exists: {self.directory}."
                                       " Pass overwrite=True to overwrite.")
             else:
-                self.logger.warning(f"Removing existing grid data: {self._datadir}.")
-                shutil.rmtree(self._datadir)
-        os.makedirs(self._datadir)
+                self.logger.warning(f"Removing existing grid data: {self.directory}.")
+                shutil.rmtree(self.directory)
+        os.makedirs(self.directory)
 
     def _get_sample_filename(self, permutation_number):
         """
         """
         basename = f"sample_{permutation_number}.csv"
-        return os.path.join(self._datadir, basename)
+        return os.path.join(self.directory, basename)
 
     def _permutation_to_dict(self, par_array):
         """

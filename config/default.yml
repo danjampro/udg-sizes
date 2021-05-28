@@ -14,6 +14,12 @@ injections:
   receff_filename: recoveff_interp.pkl
   catalogue_filename: selected.csv
 
+# Define mappings between model parameter names and those in the observed catalogue
+obskeys:
+  uae_obs_jig: "mueff_av"
+  rec_obs_jig: "rec_arcsec"
+  colour_obs: "g_r"
+
 defaults:
   band: "HSC-R"
   nproc: 6
