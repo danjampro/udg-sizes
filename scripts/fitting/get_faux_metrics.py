@@ -11,6 +11,7 @@ from udgsizes.fitting.grid import ParameterGrid
 
 CONFIG = get_config()
 MODEL_NAME = "blue_sedgwick_shen_final"
+METRICS_IGNORE = ["kstest_2d"]
 NITERS = 100
 NPROC = 4
 
@@ -53,4 +54,4 @@ if __name__ == "__main__":
 
         filename = os.path.join(directory, f"metrics_{i}.csv")
 
-        metrics = grid.evaluate(dfo=dff, filename=filename, nproc=NPROC)
+        grid.evaluate(dfo=dff, filename=filename, nproc=NPROC, metrics_ignore=METRICS_IGNORE)
