@@ -90,7 +90,7 @@ def plot_observations(grid, ax_dict, color="b"):
 
     # Find the good-fitting model with the best ks-statistics
     dfm = grid.load_confident_metrics()
-    metrics = dfm.iloc[np.argmax(dfm["kstest_min"])]
+    metrics = dfm.iloc[np.argmax(dfm["kstest_min"].values)]
 
     for key, ax in ax_dict.items():
         if key in OBSKEYS:
