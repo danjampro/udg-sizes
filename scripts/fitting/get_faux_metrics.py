@@ -11,8 +11,8 @@ from udgsizes.fitting.grid import ParameterGrid
 
 CONFIG = get_config()
 MODEL_NAME = "blue_sedgwick_shen_final"
-N_ITERS = 100
-N_PROC = 4
+NITERS = 100
+NPROC = 4
 
 
 def get_faux_observations(df, dfo):
@@ -47,10 +47,10 @@ if __name__ == "__main__":
     os.makedirs(directory, exist_ok=True)
 
     # Calculate metrics
-    for i in range(N_ITERS):
+    for i in range(NITERS):
 
         dff = get_faux_observations(df, dfo)
 
         filename = os.path.join(directory, f"metrics_{i}.csv")
 
-        metrics = grid.evaluate(dfo=dff, filename=filename)
+        metrics = grid.evaluate(dfo=dff, filename=filename, nproc=NPROC)
