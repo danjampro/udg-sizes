@@ -6,7 +6,7 @@ from udgsizes.fitting.grid import ParameterGrid
 from udgsizes.obs.sample import load_sample
 from udgsizes.utils.selection import GR_MIN, GR_MAX
 
-MODEL_NAME = "blue_sedgwick_shen"
+MODEL_NAME = "blue_sedgwick_shen_final"
 SAVEFIG = True
 FONTSIZE = 14
 BINS_OBS = 10
@@ -133,7 +133,7 @@ if __name__ == "__main__":
         ax_dict[key].axes.yaxis.set_ticklabels([])
 
     dfs = get_best_samples(grid)
-    plot_best_samples(grid, ax_dict)
+    plot_best_samples(dfs, ax_dict)
 
     plot_best_sample(grid, ax_dict)
 
