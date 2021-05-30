@@ -254,14 +254,15 @@ class ParameterGrid(UdgSizesBase):
 
         return hyper_params
 
-    def evaluate_one(self, index=None, metric=None, thinning=None, **kwargs):
+    def evaluate_one(self, df=None, index=None, metric=None, thinning=None, **kwargs):
         """
         """
         if index is None:
             index = self._get_best_index(metric=metric)
 
         # Load model data
-        df = self.load_sample(index=index, select=False)
+        if df is None:
+            df = self.load_sample(index=index, select=False)
 
         if thinning is not None:
             df = df[::thinning].reset_index(drop=True)

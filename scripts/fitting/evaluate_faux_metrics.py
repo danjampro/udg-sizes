@@ -28,6 +28,8 @@ if __name__ == "__main__":
     # Calculate metrics
     for i in range(NITERS):
 
+        grid.logger.debug(f"Iteration {i+1} of {NITERS}.")
+
         dff = grid.make_faux_observations()
 
         filename = os.path.join(directory, f"metrics_{i}.csv")
