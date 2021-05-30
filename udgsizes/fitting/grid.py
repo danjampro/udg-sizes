@@ -11,36 +11,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 from udgsizes.base import UdgSizesBase
-from udgsizes.core import get_config
 from udgsizes.utils.library import load_module
+from udgsizes.obs.sample import load_sample
 from udgsizes.model.utils import create_model, get_model_config
 from udgsizes.fitting.metrics import MetricEvaluator
 from udgsizes.utils.selection import GR_MIN, GR_MAX
 from udgsizes.utils.stats.confidence import confidence_threshold
 from udgsizes.fitting.utils.plotting import fit_summary_plot, plot_2d_hist, threshold_plot
 from udgsizes.utils.stats.likelihood import unlog_likelihood
-
-
-def _get_datadir(model_name, config=None):
-    """
-    """
-    if config is None:
-        config = get_config()
-    return os.path.join(config["directories"]["data"], "models", "grid", model_name)
-
-
-def _get_metric_filename(model_name, **kwargs):
-    """
-    """
-    datadir = _get_datadir(model_name, **kwargs)
-    return os.path.join(datadir, "metrics.csv")
-
-
-def load_metrics(model_name, **kwargs):
-    """
-    """
-    filename = _get_metric_filename(model_name, **kwargs)
-    return pd.read_csv(filename)
 
 
 class ParameterGrid(UdgSizesBase):
@@ -53,9 +31,10 @@ class ParameterGrid(UdgSizesBase):
         self.model_name = model_name
         model_class = get_model_config(model_name, config=self.config)["type"]
 
-        # Setup the directory to store model samples
-        self.directory = _get_datadir(model_name=self.model_name, config=self.config)
-        self._metric_filename = _get_metric_filename(self.model_name, config=self.config)
+        # Setup the directory to store sampled model data
+        self.directory = os.path.join(self.config["directories"]["data"], "models", "grid",
+                                      self.model_name)
+        self._metrics_filename = os.path.join(self.directory, "metrics.csv")
 
         self._grid_config = self.config["grid"][model_class]
         self.quantity_names = list(self._grid_config["parameters"].keys())
@@ -63,12 +42,14 @@ class ParameterGrid(UdgSizesBase):
         # Create the metric evaluator object
         self._evaluator = MetricEvaluator(config=self.config, logger=self.logger)
 
+        # Configure the model parameters
         self.parameter_names = {}
         for quantity_name, quantity_config in self._grid_config["parameters"].items():
             self.parameter_names[quantity_name] = []
             for parameter_name, parameter_config in quantity_config.items():
                 self.parameter_names[quantity_name].append(parameter_name)
 
+        # Identify parameter permutations in grid
         self.permutations = self._get_permuations()
         self.n_permutations = len(self.permutations)
 
@@ -132,7 +113,7 @@ class ParameterGrid(UdgSizesBase):
 
         df = pd.concat(result, axis=1).T
         if save:
-            filename = self._metric_filename if filename is None else filename
+            filename = self._metrics_filename if filename is None else filename
             self.logger.debug(f"Saving metrics to {filename}.")
             df.to_csv(filename)
 
@@ -157,12 +138,16 @@ class ParameterGrid(UdgSizesBase):
         if select:
             cond = df["selected"].values.astype("bool")
             df = df[cond].reset_index(drop=True)
+
         return df
 
-    def load_metrics(self):
+    def load_metrics(self, filename=None):
         """
         """
-        df = load_metrics(self.model_name, config=self.config)
+        if filename is None:
+            filename = self._metrics_filename
+
+        df = pd.read_csv(filename)
         df["grid_idx"] = np.arange(df.shape[0])
 
         # TODO: Move to metrics
@@ -211,6 +196,20 @@ class ParameterGrid(UdgSizesBase):
 
         return df
 
+    def load_faux_metrics(self):
+        """ Load metrics evaluated using faux observed samples. """
+        dir = os.path.join(self.directory, "faux")
+        basenames = [f for f in os.listdir(dir) if f.startswith("metrics")]
+
+        self.logger.info(f"Loading {len(basenames)} faux metric sets.")
+
+        dfs = []
+        for basename in basenames:
+            df = self.load_metrics(filename=os.path.join(dir, basename))
+            dfs.append(df)
+
+        return dfs
+
     def load_confident_samples(self, **kwargs):
         """ Identify best models within confidence interval, returning a generator. """
         cond = self._identify_confident(**kwargs)
@@ -221,17 +220,19 @@ class ParameterGrid(UdgSizesBase):
         cond = self._identify_confident(**kwargs)
         return self.load_metrics()[cond]
 
-    def get_best_metrics(self, metric=None, **kwargs):
+    def get_best_metrics(self, df=None, metric=None, **kwargs):
         """
         """
-        df = self.load_metrics()
+        if df is None:
+            df = self.load_metrics()
         index = self._get_best_index(df=df, metric=metric, **kwargs)
         return df.iloc[index]
 
-    def get_best_hyper_parameters(self, **kwargs):
+    def get_best_hyper_parameters(self, flatten=False, **kwargs):
         """ Return the best fitting hyper parameters for a given model.
         Args:
             model_name (str): The name of the model.
+            flatten (bool, optional): If True, return a flattened dict. Default False.
         Returns:
             dict: The nested hyper parameter dictionary.
         """
@@ -239,10 +240,17 @@ class ParameterGrid(UdgSizesBase):
 
         hyper_params = {}
         for quantity_name in self.quantity_names:
-            hyper_params[quantity_name] = {}
+
+            if not flatten:
+                hyper_params[quantity_name] = {}
+
             for parameter_name in self.parameter_names[quantity_name]:
                 flattened_name = f"{quantity_name}_{parameter_name}"
-                hyper_params[quantity_name][parameter_name] = metrics[flattened_name]
+
+                if flatten:
+                    hyper_params[flattened_name] = metrics[flattened_name]
+                else:
+                    hyper_params[quantity_name][parameter_name] = metrics[flattened_name]
 
         return hyper_params
 
@@ -285,14 +293,41 @@ class ParameterGrid(UdgSizesBase):
 
         return mean, std
 
+    def make_faux_observations(self, df=None, dfo=None, makeplots=False, **kwargs):
+        """ Get sample of mock observations from the model sample
+        Args:
+            df (pd.DataFrame): Model samples from the best-fitting model.
+        Returns:
+            pd.DataFrame: Faux observations extracted from model samples.
+        """
+        if df is None:
+            df = self.load_best_sample(**kwargs)
+        if dfo is None:
+            dfo = load_sample(select=True)
+
+        # Choose a random sample of the same size as observations
+        indices = np.random.randint(0, df.shape[0], dfo.shape[0])
+
+        # Map the model keys into observation keys
+        dff = pd.DataFrame()
+        for key, obskey in self.config["obskeys"].items():
+            dff[obskey] = df[key].values[indices]
+
+        if makeplots:
+            self.summary_plot(dfo=dff)
+
+        return dff
+
     # Plotting
 
-    def plot_2d_hist(self, xkey, ykey, metric=None, plot_indices=False, **kwargs):
+    def plot_2d_hist(self, xkey, ykey, metric=None, plot_indices=False, df=None, **kwargs):
         """
         """
         if metric is None:
             metric = self._default_metric
-        df = self.load_metrics()
+
+        if df is None:
+            df = self.load_metrics()
 
         metrics = df[metric].values
 
