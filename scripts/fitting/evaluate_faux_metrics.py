@@ -2,11 +2,8 @@
 Calculate metrics using model samples generated from best-fit model in place of real observations.
 """
 import os
-import numpy as np
-import pandas as pd
 
 from udgsizes.core import get_config
-from udgsizes.obs.sample import load_sample
 from udgsizes.fitting.grid import ParameterGrid
 
 CONFIG = get_config()
@@ -20,6 +17,7 @@ if __name__ == "__main__":
 
     # Load best sample
     grid = ParameterGrid(MODEL_NAME)
+    df = grid.load_sample(178)
 
     # Make directory for output
     directory = os.path.join(grid.directory, "faux")
@@ -30,7 +28,7 @@ if __name__ == "__main__":
 
         grid.logger.debug(f"Iteration {i+1} of {NITERS}.")
 
-        dff = grid.make_faux_observations()
+        dff = grid.make_faux_observations(df=df)
 
         filename = os.path.join(directory, f"metrics_{i}.csv")
 

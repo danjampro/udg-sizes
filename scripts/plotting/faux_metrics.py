@@ -5,7 +5,8 @@ import matplotlib.pyplot as plt
 
 from udgsizes.fitting.grid import ParameterGrid
 
-MODEL_NAME = "blue_sedgwick_shen_final"
+MODEL_NAME = "blue_sedgwick_shen_0.35"
+# MODEL_NAME = "blue_sedgwick_shen_final"
 
 
 def plot_par(name, values, filename):

@@ -100,6 +100,30 @@ class ParameterGrid(UdgSizesBase):
 
         self.logger.debug("Finished sampling parameter grid.")
 
+    def evaluate_one(self, df=None, index=None, metric=None, thinning=None, **kwargs):
+        """
+        """
+        if index is None:
+            index = self._get_best_index(metric=metric)
+
+        # Load model data
+        if df is None:
+            df = self.load_sample(index=index, select=False)
+
+        if thinning is not None:
+            df = df[::thinning].reset_index(drop=True)
+
+        # Evaluate metrics
+        result = pd.Series(self._evaluator.evaluate(df, **kwargs))
+
+        par_array = self.permutations[index]
+        permdict = self._permutation_to_dict(par_array)
+        for quantity_name, parconf in permdict.items():
+            for par_name, par_value in parconf.items():
+                result[f"{quantity_name}_{par_name}"] = par_value
+
+        return result
+
     def evaluate(self, nproc=None, save=True, filename=None, **kwargs):
         """
         """
@@ -253,30 +277,6 @@ class ParameterGrid(UdgSizesBase):
                     hyper_params[quantity_name][parameter_name] = metrics[flattened_name]
 
         return hyper_params
-
-    def evaluate_one(self, df=None, index=None, metric=None, thinning=None, **kwargs):
-        """
-        """
-        if index is None:
-            index = self._get_best_index(metric=metric)
-
-        # Load model data
-        if df is None:
-            df = self.load_sample(index=index, select=False)
-
-        if thinning is not None:
-            df = df[::thinning].reset_index(drop=True)
-
-        # Evaluate metrics
-        result = pd.Series(self._evaluator.evaluate(df, **kwargs))
-
-        par_array = self.permutations[index]
-        permdict = self._permutation_to_dict(par_array)
-        for quantity_name, parconf in permdict.items():
-            for par_name, par_value in parconf.items():
-                result[f"{quantity_name}_{par_name}"] = par_value
-
-        return result
 
     def parameter_stats(self, key, metric=None):
         """ Return mean and std for a given parameter """
@@ -448,7 +448,7 @@ class ParameterGrid(UdgSizesBase):
                 result.append(param_dict[qname][parname])
         return result
 
-    def _get_best_index(self, metric=None, df=None, kstest_min=0.1, func=np.nanargmax):
+    def _get_best_index(self, metric=None, df=None, kstest_min=None, func=np.nanargmax):
         """
         """
         if metric is None:
@@ -466,6 +466,8 @@ class ParameterGrid(UdgSizesBase):
 
         values = df[metric].values
         index = func(values)
+
+        self.logger.debug(f"Best index: {indices[index]}")
 
         return indices[index]
 
