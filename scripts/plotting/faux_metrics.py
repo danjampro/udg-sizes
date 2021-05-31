@@ -1,12 +1,10 @@
 import os
+import argparse
 
 import pandas as pd
 import matplotlib.pyplot as plt
 
 from udgsizes.fitting.grid import ParameterGrid
-
-MODEL_NAME = "blue_sedgwick_shen_0.35"
-# MODEL_NAME = "blue_sedgwick_shen_final"
 
 
 def plot_par(name, values, filename):
@@ -27,7 +25,12 @@ def plot_par(name, values, filename):
 
 if __name__ == "__main__":
 
-    grid = ParameterGrid(MODEL_NAME)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("model_name", type=str, help="The model name.")
+    parsed_args = parser.parse_args()
+    model_name = parsed_args.model_name
+
+    grid = ParameterGrid(model_name)
     image_dir = grid.config["directories"]["images"]
 
     # Load metrics evaluated from faux observations
@@ -43,7 +46,7 @@ if __name__ == "__main__":
 
     # Plot hist for each parameter
     for parname in df.columns:
-        filename = os.path.join(image_dir, f"faux_{parname}_{MODEL_NAME}.png")
+        filename = os.path.join(image_dir, f"faux_{parname}_{model_name}.png")
 
         values = df[parname].values
         plot_par(parname, values, filename=filename)
