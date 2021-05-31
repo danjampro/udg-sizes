@@ -100,7 +100,7 @@ class ParameterGrid(UdgSizesBase):
 
         self.logger.debug("Finished sampling parameter grid.")
 
-    def evaluate_one(self, df=None, index=None, metric=None, thinning=None, **kwargs):
+    def evaluate_one(self, index=None, df=None, metric=None, thinning=None, **kwargs):
         """
         """
         if index is None:
