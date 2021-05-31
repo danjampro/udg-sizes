@@ -10,7 +10,7 @@ from udgsizes.fitting.grid import ParameterGrid
 CONFIG = get_config()
 METRICS_IGNORE = ["kstest_2d"]
 NITERS = 100
-NPROC = 4
+NPROC = 1
 
 
 if __name__ == "__main__":

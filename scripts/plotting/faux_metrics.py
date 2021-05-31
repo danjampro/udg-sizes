@@ -11,7 +11,7 @@ def plot_par(name, values, filename):
     """
     """
     fig, ax = plt.subplots()
-    ax.hist(values, density=True)
+    ax.hist(values, density=False)
     ax.set_xlabel(name)
 
     title = f"{name}: {values.mean():.2f}±{values.std():.2f}"
