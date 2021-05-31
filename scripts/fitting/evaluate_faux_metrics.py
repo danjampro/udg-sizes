@@ -16,7 +16,7 @@ NPROC = 4
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_arg("model_name", type="str", help="The model name.")
+    parser.add_argument("model_name", type="str", help="The model name.")
 
     parsed_args = parser.parse_args()
     model_name = parsed_args.model_name
