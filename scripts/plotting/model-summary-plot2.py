@@ -82,7 +82,7 @@ def plot_best_samples(dfs, ax_dict, q=0.9):
             hist, edges = np.histogram(values, range=RANGES[key], bins=BINS_MODEL, density=True)
             centres = 0.5 * (edges[1:] + edges[:-1])
 
-            ax_dict[key].plot(centres, hist, color="k", alpha=0.2, linewidth=2)
+            ax_dict[key].plot(centres, hist, color="k", alpha=0.05, linewidth=2.5)
 
     return ax_dict
 

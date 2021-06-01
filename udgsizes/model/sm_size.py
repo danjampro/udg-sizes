@@ -228,6 +228,8 @@ class UDGModel(Model):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        self._jiggler = None  # No need to jiggle
+
     def _log_likelihood(self, state, hyper_params):
         """ Calculate the model log-likelihood.
         Args:
