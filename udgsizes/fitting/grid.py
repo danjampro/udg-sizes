@@ -1,6 +1,7 @@
 """ Grid of model parameters """
 import os
 import shutil
+import tempfile
 import itertools
 from contextlib import suppress
 from functools import partial
@@ -55,6 +56,9 @@ class ParameterGrid(UdgSizesBase):
 
         self.logger.debug(f"Created ParameterGrid with {self.n_permutations} "
                           "parameter permutations.")
+
+        # Seems to help with slow IO bottleneck
+        self._copy_before_read = self.config.get("copy_before_read", False)
 
     def _get_permuations(self, oversample=1):
         """
@@ -152,7 +156,15 @@ class ParameterGrid(UdgSizesBase):
     def load_sample(self, index, select=True):
         """
         """
-        df = pd.read_csv(self._get_sample_filename(index))
+        filename = self._get_sample_filename(index)
+
+        # Seems to help with slow reads as first copies to SSD
+        if self._copy_before_read:
+            with tempfile.NamedTemporyFile() as tf:
+                shutil.copy(filename, tf.name)
+                df = pd.read_csv(tf.name)
+        else:
+            df = pd.read_csv(filename)
 
         # TODO: Move to model
         colour = df["colour_obs"].values
