@@ -7,6 +7,8 @@ from udgsizes.core import get_config
 from udgsizes.fitting.grid import ParameterGrid
 from udgsizes.fitting.utils.plotting import threshold_plot
 
+SYS_ERR_BETA = 0.05  # Systematic error not incorporated into model uncertainty
+
 
 def marginal_likelihood_plot(ax, values, weights, range=None, bins=10, fontsize=15, legend=False,
                              orientation="vertical", label_axes=False, weights_no_prior=None):
@@ -61,7 +63,7 @@ def marginal_likelihood_plot(ax, values, weights, range=None, bins=10, fontsize=
 if __name__ == "__main__":
 
     SAVEFIG = True
-    CONFLINEKWARGS = {"linewidth": 1.3, "color": "springgreen", "linestyle": "--"}
+    CONFLINEKWARGS = {"linewidth": 1.5, "color": "springgreen", "linestyle": "--"}
     FONTSIZE = 14
 
     model_name = "blue_sedgwick_shen_final"
@@ -108,14 +110,25 @@ if __name__ == "__main__":
     ax0.set_xlabel(xlabel, fontsize=FONTSIZE+2)
     ax0.set_ylabel(ylabel, fontsize=FONTSIZE+2)
 
+    s1b = np.sqrt(s1 ** 2 + SYS_ERR_BETA ** 2)
+    CONFLINEKWARGSb = CONFLINEKWARGS.copy()
+    CONFLINEKWARGSb["color"] = "orchid"
+
     xlim = ax0.get_xlim()
     ylim = ax0.get_ylim()
     ax0.plot([m1-s1, m1-s1], ylim, **CONFLINEKWARGS)
     ax0.plot([m1+s1, m1+s1], ylim, **CONFLINEKWARGS)
+    ax0.plot([m1-s1b, m1-s1b], ylim, **CONFLINEKWARGSb)
+    ax0.plot([m1+s1b, m1+s1b], ylim, **CONFLINEKWARGSb)
     ax0.plot(xlim, [m2-s2, m2-s2], **CONFLINEKWARGS)
     ax0.plot(xlim, [m2+s2, m2+s2], **CONFLINEKWARGS)
     ax0.set_xlim(xlim)
     ax0.set_ylim(ylim)
+
+    ylim = ax1.get_ylim()
+    ax1.plot([m1-s1b, m1-s1b], ylim, **CONFLINEKWARGSb)
+    ax1.plot([m1+s1b, m1+s1b], ylim, **CONFLINEKWARGSb)
+    ax1.set_ylim(ylim)
 
     # Plot best fit model
     # ax0.plot(metrics[xkey], metrics[ykey], "ro", markersize=5, label="Best fit")

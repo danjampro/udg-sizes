@@ -8,7 +8,8 @@ from scipy.integrate import simps
 from udgsizes.model.utils import create_model
 from udgsizes.fitting.grid import ParameterGrid
 
-MODEL_NAME = "blue_sedgwick_shen_0.35"
+# MODEL_NAME = "blue_sedgwick_shen_0.35"
+MODEL_NAME = "blue_sedgwick_shen_final"
 UDG_MODEL_NAME = "blue_sedgwick_shen_udg"
 SAVEFIG = True
 
