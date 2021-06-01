@@ -69,6 +69,24 @@ def plot_best_samples(dfs, ax_dict, q=0.9):
     return ax_dict
 
 
+def plot_best_samples(dfs, ax_dict, q=0.9):
+    """
+    """
+    for df in dfs:
+
+        # Apply selection
+        df = df[df["selected"].values == 1].reset_index(drop=True)
+
+        for key in PAR_NAMES:
+            values = df[key].values
+            hist, edges = np.histogram(values, range=RANGES[key], bins=BINS_MODEL, density=True)
+            centres = 0.5 * (edges[1:] + edges[:-1])
+
+            ax_dict[key].plot(centres, hist, color="k", alpha=0.2, linewidth=2)
+
+    return ax_dict
+
+
 def plot_best_sample(grid, ax_dict, linewidth=1.5, color="k"):
     """
     """
