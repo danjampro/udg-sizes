@@ -10,7 +10,7 @@ MODEL_NAME = "blue_sedgwick_shen_final"
 SAVEFIG = True
 FONTSIZE = 14
 BINS_OBS = 10
-BINS_MODEL = 30
+BINS_MODEL = 40
 METRIC = "posterior_kde_3d"
 PAR_NAMES = "logmstar", "redshift", "rec_phys", "uae_obs_jig", "rec_obs_jig", "colour_obs"
 
@@ -69,9 +69,9 @@ def plot_best_samples(dfs, ax_dict, q=0.9):
     return ax_dict
 
 
+"""
 def plot_best_samples(dfs, ax_dict, q=0.9):
-    """
-    """
+
     for df in dfs:
 
         # Apply selection
@@ -82,12 +82,13 @@ def plot_best_samples(dfs, ax_dict, q=0.9):
             hist, edges = np.histogram(values, range=RANGES[key], bins=BINS_MODEL, density=True)
             centres = 0.5 * (edges[1:] + edges[:-1])
 
-            ax_dict[key].plot(centres, hist, color="k", alpha=0.05, linewidth=2.5)
+            ax_dict[key].plot(centres, hist, color="k", alpha=0.05, linewidth=1.5)
 
     return ax_dict
+"""
 
 
-def plot_best_sample(grid, ax_dict, linewidth=1.5, color="k"):
+def plot_best_sample(grid, ax_dict, linewidth=1.5, color="b"):
     """
     """
     df = grid.load_best_sample(select=True, metric=METRIC)
@@ -98,10 +99,10 @@ def plot_best_sample(grid, ax_dict, linewidth=1.5, color="k"):
         hist, edges = np.histogram(values, range=RANGES[key], bins=BINS_MODEL, density=True)
         centres = 0.5 * (edges[1:] + edges[:-1])
 
-        ax.plot(centres, hist, "-", linewidth=linewidth, color=color)
+        ax.plot(centres, hist, linestyle=(0, (5, 1)), linewidth=linewidth, color=color)
 
 
-def plot_observations(grid, ax_dict, color="b"):
+def plot_observations(grid, ax_dict, color="k"):
     """
     """
     dfo = load_sample(select=True)

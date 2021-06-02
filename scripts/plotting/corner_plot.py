@@ -83,7 +83,7 @@ if __name__ == "__main__":
     znoprior = df[zkey_noprior].values
     z = df[zkey].values
 
-    xrange = x.min(), 0.7
+    xrange = x.min(), 0.675
     yrange = -1.675, -1.225
     # xrange = x.min(), x.max()
     # yrange = y.min(), y.max()
@@ -102,17 +102,19 @@ if __name__ == "__main__":
     m1, s1 = marginal_likelihood_plot(ax1, x, z, range=xrange, weights_no_prior=znoprior)
     m2, s2 = marginal_likelihood_plot(ax2, y, z, range=yrange, orientation="horizontal",
                                       weights_no_prior=znoprior)
-    print(m1, s1)
-    print(m2, s2)
 
     # Legend and axes labels
     # ax0.legend(loc="lower left", fontsize=FONTSIZE-3)
     ax0.set_xlabel(xlabel, fontsize=FONTSIZE+2)
     ax0.set_ylabel(ylabel, fontsize=FONTSIZE+2)
 
-    s1b = np.sqrt(s1 ** 2 + SYS_ERR_BETA ** 2)
+    grid_step = grid._grid_config["parameters"]["rec_phys_offset"]["alpha"]["step"]
+    s1b = np.sqrt(s1 ** 2 + SYS_ERR_BETA ** 2 + grid_step ** 2)
     CONFLINEKWARGSb = CONFLINEKWARGS.copy()
     CONFLINEKWARGSb["color"] = "orchid"
+
+    print(m1, s1, s1b)
+    print(m2, s2)
 
     xlim = ax0.get_xlim()
     ylim = ax0.get_ylim()

@@ -134,7 +134,8 @@ if __name__ == "__main__":
 
     alpha_mean, alpha_std = grid.parameter_stats("rec_phys_offset_alpha")
 
-    alpha_std = np.sqrt(alpha_std ** 2 + SYS_ERR_BETA ** 2)
+    grid_step = grid._grid_config["parameters"]["rec_phys_offset"]["alpha"]["step"]
+    alpha_std = np.sqrt(alpha_std ** 2 + SYS_ERR_BETA ** 2 + grid_step ** 2)
 
     # fig, ax = plt.subplots(figsize=(9, 6))
     fig, ax = plt.subplots(figsize=(12, 6))
