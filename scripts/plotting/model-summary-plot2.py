@@ -137,7 +137,8 @@ if __name__ == "__main__":
 
     grid = ParameterGrid(MODEL_NAME)
 
-    fig = plt.figure(figsize=(5, 7.5))
+    # fig = plt.figure(figsize=(5, 7.5))
+    fig = plt.figure(figsize=(5, 6))
 
     ax_dict = {}
     for i, key in enumerate(PAR_NAMES):
